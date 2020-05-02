@@ -1,3 +1,4 @@
+; vim: set filetype=nasm :
 section .data
 fail_msg: db 'panic: buffer too small', 0
 char_buf: db 0
@@ -51,17 +52,16 @@ string_copy:
 
 
 print_char:
-    xor rax, rax
-    mov [char_buf], rdi
-    mov rsi, char_buf
+	push rdi
+    mov rsi, rsp
     mov rdx, 1
     call _write
+	pop rdi
     ret
 
 print_newline:
     xor rax, rax
     ret
-
 
 print_uint:
     mov rax, rdi ; store quotient, which starts as the argument rdi
@@ -83,9 +83,17 @@ print_uint:
     .exit:
         ret
 
-
 print_int:
     xor rax, rax
+    cmp rdi, 0
+    jge .positive
+    mov r9, rdi
+    mov rdi, 45
+    call print_char
+    mov rdi, r9
+    neg rdi
+    .positive:
+    call print_uint
     ret
 
 string_equals:
@@ -94,16 +102,53 @@ string_equals:
 
 
 read_char:
+	push 0
     xor rax, rax
-    mov rdi, 1 ; stdint
-    mov rsi, char_buf
+    mov rsi, rsp
+    mov rdi, 0 ; stdint
     mov rdx, 1 ; size
     syscall
-    mov ax, [char_buf]
+	pop rax
+    mov rdi, rax
     ret 
 
 read_word:
+	; accepts a buffer address (rdi) and size (rsi)
+    ; writes to buffer skipping whitespaces
+    ; returns 0 if buffer too small
+    mov rdx, 0 ; tracks where in the buffer we are
+	.loop:
+    push rsi
+    push rdi
+    push rdx
+	call read_char
+    pop rdx
+    pop rdi
+    pop rsi
+    cmp rax, 0
+    je .exit
+    cmp rax, 0x20
+    je .check_end
+    cmp rax, 0x9
+    je .check_end
+    cmp rax, 0xA
+    je .check_end
+	mov [rdi+rdx], rax
+    add rdx, 1
+	cmp rdx, rsi
+	jg .too_big
+    jmp .loop
+	.exit:
+    mov byte[rdi+rdx], 0
+    mov rax, rdi
     ret
+    .too_big:
+    mov rax, 0
+    ret
+    .check_end:
+    cmp rdx, 0
+    jg .exit
+    jmp .loop
 
 ; rdi points to a string
 ; returns rax: number, rdx : length
