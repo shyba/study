@@ -12,10 +12,6 @@ _write: ; whatever is on rsi, rdx len!
     syscall
     ret
 
-_fail:
-    mov rsi, fail_msg
-    mov rdx, 1
-    call _write
 
 string_length:
     xor rax, rax
@@ -37,7 +33,7 @@ print_string:
 string_copy:
     call string_length
     cmp rdx, rax
-    jl _fail
+    jle .fail
     mov rdx, rax
     xor rax, rax
     .loop:
@@ -48,6 +44,9 @@ string_copy:
         jl .exit
         jmp .loop
     .exit:
+        ret
+    .fail:
+        mov rax, 0
         ret
 
 
