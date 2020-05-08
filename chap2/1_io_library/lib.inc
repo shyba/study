@@ -153,8 +153,20 @@ read_word:
 ; rdi points to a string
 ; returns rax: number, rdx : length
 parse_uint:
+    xor rax, rax
+    .numlen:
+        cmp byte[rdi+rax], 48
+        jl .numlen_exit
+        cmp byte[rdi+rax], 57
+        jg .numlen_exit
+        inc rax
+        jmp .numlen
+    .numlen_exit:
+        mov r8, rax
+        dec rax
+        mov r9, rax
     push r12
-    xor r9, r9 ; counter
+    ;xor r9, r9 ; counter
     mov r10, 1 ; multiplier
     mov r11, 0 ; sum
     mov r12, 10; factor
@@ -162,8 +174,6 @@ parse_uint:
         xor rax, rax
         xor rdx, rdx
         mov al, byte[rdi+r9]
-        cmp rax, 0
-        jz .exit
         sub rax, 48 ; 48 is 0 in ascii
         cmp rax, 0
         jl .exit
@@ -171,14 +181,16 @@ parse_uint:
         jg .exit
         mul r10
         add r11, rax
-        inc r9
+        dec r9
         mov rax, r10
         mul r12
         mov r10, rax
+        cmp r9, 0
+        jl .exit
         jmp .parse
     .exit:
     mov rax, r11
-    mov rdx, r9
+    mov rdx, r8
     pop r12
     ret
 
