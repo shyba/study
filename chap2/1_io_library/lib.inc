@@ -96,9 +96,25 @@ print_int:
     call print_uint
     ret
 
+;rdi and rsi
 string_equals:
     xor rax, rax
-    ret
+    mov r9, -1
+    .loop:
+        inc r9
+        mov al, byte[rdi+r9]
+        cmp al, byte[rsi+r9]
+        jne .notsame
+        cmp al, 0
+        jg .loop
+        cmp byte[rsi+r9], 0
+        jne .notsame
+    .same:
+        mov rax, 1
+        ret
+    .notsame:
+        mov rax, 0
+        ret
 
 
 read_char:
