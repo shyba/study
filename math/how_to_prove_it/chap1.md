@@ -9,3 +9,17 @@ M=2x3x5x7+1=211
 
 b) 2,5,11
 M=2x3x5x7x11+1=2311
+
+4)
+```python
+isprime = lambda x: all(x%y!=0 for y in range(2,x))
+
+primes = []
+for n in range(10000):
+    if len(primes) == 5: break
+    if isprime(n): primes.clear()
+    else: primes.append(n)
+
+primes
+[24, 25, 26, 27, 28]
+```
