@@ -25,9 +25,9 @@ primes
 ```
 
 5)
-from the table, 3 and 7 are valid options, giving 28 and 8128 as perfect
+from the table, 3 and 7 are valid options, so 28 and 8128 as perfect
 
-then, continuing it:
+as an extra exercise, continuing the table:
 
 n | isPrime | 2^n-1 | is 2^n-1 prime? |
 --|---------|-------|-----------------|
@@ -41,7 +41,7 @@ n | isPrime | 2^n-1 | is 2^n-1 prime? |
 
 candidates are 8191 and 131071
 from Euclid, 2^(n-1)*(2^n-1) is perfect, so
-33550336 and 8589869056 are too
+33550336 and 8589869056
 
 ```python
 perfect = lambda x: 2**(x-1)*(2**x-1)
@@ -65,3 +65,15 @@ output:
 11 True 2047 False 2096128 False
 12 False 4095 False 8386560 False
 ```
+
+6)
+```python
+for n in range(1, 30000):
+    if isprime(n) and isprime(n+2) and isprime(n+4):
+        print(n, n+2, n+4)
+```
+```
+1 3 5
+3 5 7
+```
+up to 30,000 those are the only 2 triplets
