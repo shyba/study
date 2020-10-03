@@ -77,3 +77,17 @@ for n in range(1, 30000):
 3 5 7
 ```
 up to 30,000 those are the only 2 triplets
+
+7)
+```python
+small_div_sum = lambda x: sum(n for n in range(1, x) if x%n==0)
+amicables = lambda x, y: small_div_sum(x) == y and small_div_sum(y) == x
+amicables(220, 284)
+amicables(20, 30)
+```
+
+--->
+```
+True
+False
+```
