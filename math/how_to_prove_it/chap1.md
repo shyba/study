@@ -231,3 +231,78 @@ T|T|F |  T  |  T  | F |   F  |  F  |  T  |    T |
 T|F|F |  T  |  F  | T |   T  |  F  |  T  |    F |
 F|T|T |  T  |  F  | T |   T  |  T  |  T  |    F |
 F|F|T |  F  |  F  | T |   T  |  T  |  F  |    F |
+
+7)
+a)
+Jm | Pm | Pc | ¬(Jm∧Pm)∧(Pm∨Pc)∧Jm | Pc |
+---|----|----|---------------------|----|
+ T |  T | T  |         F           |  T |
+ T |  T | F  |         F           |  F |
+ T |  F | T  |         T           |  T |
+ T |  F | F  |         F           |  F |
+ F |  T | T  |         F           |  T |
+ F |  T | F  |         F           |  F |
+ F |  F | T  |         F           |  T |
+ F |  F | F  |         F           |  F |
+
+b)
+(B∨F)∧(P∨C)∧¬(F∧C) -> ¬(B∧P)
+ B |  F | P  | C  |(B∨F)∧(P∨C)∧¬(F∧C)|¬(B∧P)| valid |
+---|----|----|----|------------------|------|-------|
+ T |  T | T  | T  |         F        |   F  |   T   |
+ T |  T | T  | F  |         T        |   F  |   F   |
+ T |  T | F  | T  |         F        |   T  |   T   |
+ T |  T | F  | F  |         F        |   T  |   T   |
+ T |  F | T  | T  |         T        |   F  |   F   |
+ T |  F | T  | F  |         T        |   F  |   F   |
+ T |  F | F  | T  |         T        |   T  |   T   |
+ T |  F | F  | F  |         F        |   T  |   T   |
+ F |  T | T  | T  |         F        |   T  |   T   |
+ F |  T | T  | F  |         T        |   T  |   T   |
+ F |  T | F  | T  |         F        |   T  |   T   |
+ F |  T | F  | F  |         F        |   T  |   T   |
+ F |  F | T  | T  |         F        |   T  |   T   |
+ F |  F | T  | F  |         F        |   T  |   T   |
+ F |  F | F  | T  |         F        |   T  |   T   |
+ F |  F | F  | F  |         F        |   T  |   T   |
+
+c)
+(J∨B)∧(¬S∨¬B) -> J∨¬S
+ B |  J | S  | (J∨B)∧(¬S∨¬B) |J∨¬S|
+---|----|----|---------------|-----|
+ T |  T | T  |       F       |  T  |
+ T |  T | F  |       T       |  T  |
+ T |  F | T  |       F       |  F  |
+ T |  F | F  |       T       |  T  |
+ F |  T | T  |       T       |  T  |
+ F |  T | F  |       T       |  T  |
+ F |  F | T  |       F       |  F  |
+ F |  F | F  |       F       |  T  |
+
+d)
+(S∧B)∨(E∧¬B) -> ¬S∨¬E
+ B |  E | S  | (S∧B)∨(E∧¬B)  |¬S∨¬E|invalid|
+---|----|----|---------------|-----|-------|
+ T |  T | T  |       T       |  F  |   *   |
+ T |  T | F  |       F       |  T  |       |
+ T |  F | T  |       T       |  T  |       |
+ T |  F | F  |       F       |  T  |       |
+ F |  T | T  |       T       |  F  |   *   |
+ F |  T | F  |       T       |  T  |       |
+ F |  F | T  |       F       |  T  |       |
+ F |  F | F  |       F       |  T  |       |
+
+
+8)
+P|Q|(P∧Q)∨(¬P∧¬Q)| ¬P∨Q | (P∨¬Q)∧(Q∨¬P) | ¬(P∨Q) | (Q∧P)∨¬P |
+-|-|-------------|------|---------------|--------|----------|
+T|T|      T      |  T   |       T       |    F   |     T    |
+T|F|      F      |  F   |       F       |    F   |     F    |
+F|T|      F      |  T   |       F       |    F   |     T    |
+F|F|      T      |  T   |       T       |    T   |     T    |
+
+a) to c)
+b) to e)
+c) to a)
+d) none
+e) to b)
