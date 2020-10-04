@@ -50,3 +50,89 @@ a) (P∧Q)∨(R∧S)
 b) (P∨R)∨(Q∨S)
 c) (¬P∨¬R)∨(¬Q∨¬S)
 d) ¬(P∧R)∨¬(Q∨S)
+
+5) a and c
+
+6)
+P = "I will buy the pants"
+S = "I will buy the shirt"
+a) I will not buy the pants without the shirt
+b) I will not buy the pants and the shirt
+c) Either I will not buy the pants or I will not buy the shirt
+
+7)
+S = "Steve is happy"
+G = "George is happy"
+a) Either Steve or George is happy and either Steve or George is not happy
+b) George is not happy or either Steve is happy or George is happy and steve is not happy
+c) Either Steve is happy or George is happy and Steve is unhappy
+
+8)
+T = "Taxes will go up"
+D = "The deficit will go up"
+a) Either taxes or deficit will go up
+b) Taxes and deficit wont both go up or down together
+c) Either taxes will go up and deficit go down or deficit will go up and taxes go down
+
+9)
+a)
+Jm = "Jane will win the math prize"
+Pm = "Pete will win the math prize"
+Jc = "Jane will win the chemistry prize"
+Pc = "Pete will win the chemistry prize"
+¬(Jm∧Pm)∧(Pm∨Pc)∧Jm -> Pc
+(¬Jm∨¬Pm)∧(Pm∨Pc)∧Jm -> Pc
+Jm has to be True due the last AND
+PM has to be False due the first OR with JM being True
+PC has to be True as PM is False on the second OR
+Therefore, the conclusion is valid
+
+b)
+B = "main course is beef"
+F = "main course is fish"
+P = "vegetable is peas"
+C = "vegetable is corn"
+
+(B∨F)∧(P∨C)∧¬(F∧C) -> ¬(B∧P)
+- either B or P needs to be false for the reasoning to be valid
+- if B is false:
+  - F is True so the first OR is True
+  - C is False so the last AND is False, being True after the NOT
+  - P is True due the middle OR
+- if P is false:
+  - C is True due the middle OR
+  - F is False so the last AND becomes False then negated to True
+  - B is True due the first OR
+- Therefore, if both B and P are False:
+  - F is True due the first OR
+  - C is True due the second OR
+  - last AND is True, negating to False and making the expression false
+  - which is a contradiction
+so, this is a contradiction when B and P are False
+
+c)
+J = "John is telling the truth"
+B = "Bill is telling the truth"
+S = "Sam is telling the truth"
+(J∨B)∧(¬S∨¬B) -> J∨¬S
+
+- J is False:
+  - B is True due the first OR
+  - S is False due the second OR
+- J is True:
+  - S and B are free as the second OR doesnt depend on J
+- J is False and S is True
+  - both premise and conclusion are False, which is ok
+that is a valid statement
+
+d)
+S = "sales will go up"
+B = "boss will be happy"
+E = "expenses will go up"
+(S∧B)∨(E∧¬B) -> ¬S∨¬E
+
+- S and E are False:
+  - First AND is False
+  - Second AND is False
+  - Premise is False but conclusion is True, which is a contradiction
+Therefore this expression isnt valid
