@@ -136,3 +136,23 @@ E = "expenses will go up"
   - Second AND is False
   - Premise is False but conclusion is True, which is a contradiction
 Therefore this expression isnt valid
+
+----------------------------------------------------
+
+## 1.2
+
+1)
+ P | Q | ¬P∨Q |
+---|---|------|
+T  | T |  T   |
+T  | F |  F   |
+F  | T |  T   |
+F  | F |  T   |
+
+2)
+ S | G | (S∨G)∧(¬S∨¬G) |
+---|---|---------------|
+T  | T |  F            |
+T  | F |  T            |
+F  | T |  T            |
+F  | F |  F            |
