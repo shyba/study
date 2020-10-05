@@ -301,8 +301,115 @@ T|F|      F      |  F   |       F       |    F   |     F    |
 F|T|      F      |  T   |       F       |    F   |     T    |
 F|F|      T      |  T   |       T       |    T   |     T    |
 
-a) to c)
-b) to e)
-c) to a)
-d) none
-e) to b)
+- a) to c)
+- b) to e)
+- c) to a)
+- d) none
+- e) to b)
+
+9)
+P|Q| (P∨Q) | ¬P∨¬Q | ¬P∧¬Q |
+-|-|-------|-------|-------|
+T|T|   T   |   F   |   F   |
+T|F|   T   |   T   |   F   |
+F|T|   T   |   T   |   F   |
+F|F|   F   |   T   |   T   |
+
+P|Q|R| [P∧(Q∨¬R)]∨(¬P∨R) |
+-|-|-|-------------------|
+T|T|T|         T         |
+T|T|F|         T         |
+T|F|T|         T         |
+T|F|F|         T         |
+F|T|T|         T         |
+F|T|F|         T         |
+F|F|T|         T         |
+F|F|F|         T         |
+
+a) neither
+b) contradiction
+c) tautology
+d) tautology
+
+10)
+
+a)
+2nd DeMorgan law: ¬(P∨Q) is equivalent to ¬P∧¬Q
+
+P|Q| ¬(P∨Q) | ¬P∧¬Q | P∧(Q∨R) | (P∧Q)∨(P∧R) | P∨(Q∧R) | (P∨Q)∧(P∨R) |
+-|-|--------|-------|---------|-------------|---------|-------------|
+T|T|   F    |   F   |         |             |         |             |
+T|F|   F    |   F   |         |             |         |             |
+F|T|   F    |   F   |         |             |         |             |
+F|F|   T    |   T   |         |             |         |             |
+
+b)
+Distributive lars:
+- P∧(Q∨R) is equivalent to (P∧Q)∨(P∧R)
+- P∨(Q∧R) is equivalent to (P∨Q)∧(P∨R)
+
+P|Q|R| P∧(Q∨R) | (P∧Q)∨(P∧R) | P∨(Q∧R) | (P∨Q)∧(P∨R) |
+-|-|-|---------|-------------|---------|-------------|
+T|T|T|    T    |      T      |    T    |      T      |
+T|T|F|    T    |      T      |    T    |      T      |
+T|F|T|    T    |      T      |    T    |      T      |
+T|F|F|    F    |      F      |    T    |      T      |
+F|T|T|    F    |      F      |    T    |      T      |
+F|T|F|    F    |      F      |    F    |      F      |
+F|F|T|    F    |      F      |    F    |      F      |
+F|F|F|    F    |      F      |    F    |      F      |
+
+11)
+a)
+```
+¬(¬P∧¬Q)
+P∨Q
+```
+
+b)
+```
+(P∧Q)∨(P∧¬Q)
+P∧(Q∨¬Q)
+P
+```
+
+c)
+```
+¬(P∧¬Q)∨(¬P∧Q)
+(¬P∨Q)∨(¬P∧Q)
+((¬P∨Q)∨¬P)∧((¬P∨Q)∨Q)
+(Q∨(¬P∨¬P))∧(¬P∨(Q∨Q))
+(Q∨¬P)∧(¬P∨Q)
+Q∨(¬P∧¬P)
+Q∨¬P
+```
+
+12)
+a)
+```
+¬(¬P∨Q)∨(P∧¬R)
+(P∧¬Q)∨(P∧¬R)
+P∧(¬Q∨¬R)
+P∧¬(Q∧R)
+```
+
+b)
+```
+¬(¬P∧Q)∨(P∧¬R)
+(P∨¬Q)∨(P∧¬R)
+((P∨¬Q)∨P)∧((P∨¬Q)∨¬R)
+(P∨¬Q)∧(P∨(¬Q∨¬R))
+P∨(¬Q∧(¬Q∨¬R)
+P∨¬Q
+
+pitfall: absorption
+```
+
+c)
+```
+(P∧R)∨[¬R∧(P∨Q)]
+(P∧R)∨[(¬R∧P)∨(¬R∧Q)]
+[(P∧R)∨(¬R∧P)]∨(¬R∧Q)]
+[P∧(R∨¬R)]∨(¬R∧Q)]
+P∨(¬R∧Q)
+```
