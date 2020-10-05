@@ -413,3 +413,35 @@ c)
 [P∧(R∨¬R)]∨(¬R∧Q)]
 P∨(¬R∧Q)
 ```
+
+13)
+```
+start with what you want to prove
+¬P∨¬Q
+double negate
+¬¬(¬P∨¬Q)
+apply De Morgan first rule
+¬(P∧Q)
+```
+
+14)
+```
+(P∧Q)∧(R∧S)
+[(P∧Q)∧R]∧S
+[P∧(Q∧R)]∧S
+```
+
+15) 2**n
+
+16) ¬(¬P∧Q)
+
+17) (¬P∧Q)∨(P∧¬Q) which is also an XOR
+
+18)
+In order to be valid, when a promise is true the conclusion has to be true. Otherwise they can take any value as long as we cant find a true promise with a false conclusion.
+
+So, if the conclusion is a tautology then the statement is valid as all true values on premises will map to true.
+
+If the conclusion is a contradiction, then its only valid if the premise is a contradiction.
+
+For a premise that is a tautology, in order to be valid, the conclusion must be a also tautology, so all true premises maps to true conclusions. Otherwise, if the premise is a contradiction, then any conclusion is valid.
