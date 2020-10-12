@@ -452,7 +452,57 @@ For a premise that is a tautology, in order to be valid, the conclusion must be 
 -----
 
 1)
-a)
-D(x,y) = "x is divisible by y"
+D(w,z) = "w is divisible by z"
 
+a)
 D(6, 3)∧D(9, 3)∧D(15, 3)
+
+b)
+D(x, 2)∧D(x, 3)∧¬D(x, 4)
+
+c)
+N(w) = "w is a natural number"
+P(w) = "w is a prime number"
+
+(N(x)∧N(y)∧(P(x) ⊻ P(y))
+
+2)
+a)
+M(w) = "w is a man"
+T(w, z) = "w is taller than z"
+(M(x)∧M(y))∧(T(x, y)⊻T(y, x))
+
+b)
+B(w) = "w has brown eyes"
+R(w) = "w has red hair"
+
+(B(x)∨B(y))∧(R(x)∨R(y))
+
+c)
+using R and B from previous item:
+S(w) = R(w) ∧ B(w)
+
+S(x) ∨ S(y)
+
+3)
+a) {x| x is a planet in the same system as Earth}
+b) {x| x is an american university in Ivy League}
+c) {x| x is a state in USA}
+d) {x| x is a province of Canada}
+
+4)
+a) {x ∈ ℕ| x²}
+b) {n ∈ ℕ| 2ⁿ}
+c) {n ∈ ℕ | n ∈ {0...9} | n + 10}
+
+5)
+a) x is bound and there is no free variable. Statement is true, as x satisfies it
+b) x is bound and there is no free variable. It is false as x is positive, thus not belonging to the set of negative real numbers
+c) x is bound and c is free.
+13 - 2x > c
+13 - 10 > c (replaces x with 5)
+3 > c
+negated, as 5 cant be x:
+3 ≤ c
+so
+{c ∈ ℝ | c ≥ 3 }
