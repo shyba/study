@@ -445,3 +445,14 @@ So, if the conclusion is a tautology then the statement is valid as all true val
 If the conclusion is a contradiction, then its only valid if the premise is a contradiction.
 
 For a premise that is a tautology, in order to be valid, the conclusion must be a also tautology, so all true premises maps to true conclusions. Otherwise, if the premise is a contradiction, then any conclusion is valid.
+
+----------------
+
+1.3 Functions
+-----
+
+1)
+a)
+D(x,y) = "x is divisible by y"
+
+D(6, 3)∧D(9, 3)∧D(15, 3)
