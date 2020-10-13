@@ -506,3 +506,37 @@ negated, as 5 cant be x:
 3 ≤ c
 so
 {c ∈ ℝ | c ≥ 3 }
+
+6)
+a)
+w and c are free. x is bound.
+simplification:
+13-2x > c
+13 > c + 2x
+{c ∈ ℝ | x ∈ ℝ | c + 2x < 13 }
+
+b)
+no free variables.
+statement is true:
+13 - 2(4)
+5, which is a prime
+
+c)
+statement is false as 4 isnt a prime number
+no free variables.
+
+7)
+2x² + x - 1 = 0
+(2x-1)(x+1)
+x = -1 || x = 1/2
+
+a)
+{-1, 1/2}
+b)
+{1/2}
+c)
+{-1}
+d)
+{}
+
+8)
