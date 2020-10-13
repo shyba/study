@@ -540,3 +540,23 @@ d)
 {}
 
 8)
+a)
+{x | x was once married to Elizabeth Taylor}
+{Conrad Hilton Jr, Michael Wilding, Mike Todd, Eddie Fisher, Richard Burton, John Warner, Larry Fortensky}
+
+b)
+{x | x is a logical connection studied in Section 1.1}
+{¬, ∨, ∧}
+
+c)
+{x | x is an author of How to Prove it}
+{Daniel Velleman}
+
+9)
+a)
+{x ∈ ℝ | x² - 4x + 3 = 0 }
+x² - 4x + 3 = 0
+x(x-3) + (3-x)
+(x-3)(x(x-3)/(x-3) + (3-x)/(x-3))
+(x-3)(x-1)
+{3, 1}
