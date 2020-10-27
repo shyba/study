@@ -620,3 +620,84 @@ x²<50-25
 x²<25
 {x ∈ ℝ | x² < 25 }
 {... -4, -3, -2, -1, 0, 1, 2, 3, 4, ...}
+```
+
+1.4 Sets
+#######
+1)
+```
+A={1,3,12,35}
+B={3,7,12,20}
+C={ x | x is a prime number }
+```
+a)
+```
+A∩B = {3, 12}
+```
+b)
+```
+(A∪B)\C
+({1,3,7,12,20,35})\C
+{1,12,20,35}
+```
+c)
+```
+A∪(B\C)
+A∪({12,20})
+{1,3,12,20,35}
+```
+
+conclusions
+```
+a) is disjoint. b) is a subset of c)
+```
+
+2)
+```
+A = {US,DE,CN,AU}
+B = {DE,FR,IN,BR}
+C = { x | x is a country in Europe }
+```
+a)
+```
+(A∪B) = {US,DE,CN,AU,FR,IN,BR}
+```
+b)
+```
+(A∩B)\C
+({DE})\C
+∅
+```
+c)
+```
+(B∩C)\A
+({DE,FR})\A
+{FR}
+```
+
+conclusion
+```
+b) is disjoint; c) is a subset of a)
+```
+
+3)
+```
+(A∪B)\(A∩B) = (A\B)∪(B\A)
+(A∨B)∧¬(A∧B)
+(A∧¬A)∨(A∧¬B)∨(B∧¬A)∨(B∧¬B)
+(A∧¬B)∨(B∧¬A) = (A\B)∪(B\A)
+```
+
+4)
+a) Venn diagram
+b) Venn diagram
+
+5)
+a)
+```
+A\B = A\(A∩B)
+A∧¬B = A∧¬(A∧B)
+A∧¬B = A∧(¬A∨¬B)
+A∧¬B = (A∧¬A)∨(A∧¬B)
+A∧¬B = A∧¬B
+```
