@@ -701,3 +701,151 @@ A∧¬B = A∧(¬A∨¬B)
 A∧¬B = (A∧¬A)∨(A∧¬B)
 A∧¬B = A∧¬B
 ```
+
+b)
+```
+A∪(B∩C) = (A∪B)∩(A∪C)
+A∨(B∧C) = (A∨B)∧(A∨C)
+(A∨B)∧(A∨C) = (A∨B)∧(A∨C)
+```
+
+6)
+A) venn diagram...
+B) venn diagram...
+
+7)
+a)
+```
+(A∪B)\C = (A\C)∪(B\C)
+(A∨B)∧¬C = (A∧¬C)∨(B∧¬C)
+(A∨B)∧¬C = ¬C∧(A∨B)
+```
+
+b)
+```
+A∪(B\C) = (A∪B)\(C\A)
+A∨(B∧¬C) = (A∨B)∧¬(C∧¬A)
+A∨(B∧¬C) = (A∨B)∧(¬C∨A)
+A∨(B∧¬C) = A∨(B∧¬C)
+```
+
+8)
+a)
+```
+(A\B)∩C = (A∩C)\B
+(A∧¬B)∧C = (A∧C)∧¬B
+(A∧¬B)∧C = ¬B∧(A∧C)
+(A∧¬B)∧C = (¬B∧A)∧C
+(A∧¬B)∧C = (A∧¬B)∧C
+```
+
+b)
+```
+(A∩B)\B = ∅
+(A∧B)∧¬B = contradiction
+A∧(B∧¬B) = contradiction
+since (B∧¬B) is always false and A∧(false) is also always false
+```
+
+c)
+```
+A\(A\B) = A∩B
+A∧¬(A∧¬B) = A∧B
+A∧(¬A∨B) = A∧B
+(A∧¬A)∨(A∧B) = A∧B
+(false)∨(A∧B) = A∧B
+A∧B = A∧B
+```
+
+9)a)
+```
+(A\B)\C
+(A∧¬B)∧¬C
+```
+
+b)
+```
+A\(B\C)
+A∧¬(B∧¬C)
+A∧(¬B∨C)
+```
+
+c)
+```
+(A\B)∪(A∩C)
+(A∧¬B)∨(A∧C)
+A∧(¬B∨C)
+```
+
+d)
+```
+(A\B)∩(A\C)
+(A∧¬B)∨(A∧¬C)
+A∧(¬B∧¬C)
+```
+
+e)
+```
+A\(B∪C)
+A∧¬(B∨C)
+A∧(¬B∧¬C)
+```
+
+Conclusions:
+```
+E = D = A
+C = B
+```
+
+10)
+a)
+```
+A={1,3,5,7...}
+B={2,4,6,8...}
+Getting both sets together then removing B, we get A back.
+```
+
+b)
+```
+(A∪B)\B = A\B
+(A∨B)∧¬B = A∧¬B
+(A∧¬B)∨(B∧¬B) = A∧¬B
+(A∧¬B)∨(false) = A∧¬B
+A∧¬B = A∧¬B
+```
+
+11)
+```
+(A\B)∪B = A?
+(A∧¬B)∨B
+(A∨B)∧(¬B∨B)
+(A∨B)∧(true)
+A∨B
+No, its always equal to A∪B
+```
+
+12)
+a)
+```
+Relations are hard to represent in 2 dimensions
+```
+
+b) Venn diagram
+
+13)
+a) venn diagram
+b)
+```
+A={1,2,3,4}
+B={3,4,5,6}
+C={1,3,7,8}
+(A∪B)\C ≠ A∪(B\C)
+({1,2,3,4,5,6})\C ≠ A∪({4,5,6})
+{2,4,5,6} ≠ {1,2,3,4,5,6}
+```
+14) venn diagrams..
+
+15)
+a)
+```
+```
