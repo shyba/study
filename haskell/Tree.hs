@@ -22,6 +22,9 @@ treeTraverse :: Ord a => Tree a -> [a]
 treeTraverse Empty = []
 treeTraverse (Node a left right) = a:((treeTraverse left) ++ (treeTraverse right))
 
+treeInverse Empty = Empty
+treeInverse (Node a left right) = (Node a (treeInverse right) (treeInverse left))
+
 main = do
     putStrLn (show example)
     putStrLn (show $ treeLookup 1 example)
@@ -31,6 +34,9 @@ main = do
     putStrLn (show $ treeInsert (0-1) example)
     let values = treeTraverse withHundred
     putStrLn (show $ values)
+    putStrLn (show $ treeTraverse $ treeInverse withHundred)
+    putStrLn (show $ treeInverse withHundred)
+    putStrLn (show $ withHundred)
     let otherTree = foldr treeInsert Empty (reverse values)
     putStrLn (show otherTree)
     putStr (show $ treeHeight example)
