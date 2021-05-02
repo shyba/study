@@ -1,0 +1,28 @@
+CAPI=2:
+name: fusesoc:learn:blink:0.1
+
+filesets:
+    icestick:
+        files:
+            - boards/icestick.pcf : {file_type: PCF}
+
+    rtl:
+        files:
+            - sequential_blink.v : {file_type: verilogSource}
+
+targets:
+    icestick:
+        default_tool: icestorm
+        filesets: [rtl, icestick]
+        parameters: [clk_freq_hz=12000000]
+        tools:
+            icestorm:
+                arachne_pnr_options: [-d 1k]
+                pnr: arachne
+        toplevel: top
+
+parameters:
+    clk_freq_hz:
+        datatype: int
+        description: Clock (Hz)
+        paramtype: vlogparam

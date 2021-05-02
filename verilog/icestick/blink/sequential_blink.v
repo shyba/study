@@ -2,10 +2,10 @@ module top(input clk, output D1, output D2, output D3, output D4, output D5);
 
 reg [23:0] divider;
 reg [3:0] counter;
-localparam CLOCK_MAX = 12000000; //12mhz
+parameter clk_freq_hz = 12000000; //12mhz
 
 always @(posedge clk) begin
-        divider <= (divider < CLOCK_MAX) ? (divider + 1) : 0;
+        divider <= (divider < clk_freq_hz) ? (divider + 1) : 0;
         counter <= (divider == 0) ? (counter + 1) : counter;
 end
 
