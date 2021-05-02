@@ -17,8 +17,8 @@ targets:
         parameters: [clk_freq_hz=12000000]
         tools:
             icestorm:
-                arachne_pnr_options: [-d 1k]
-                pnr: arachne
+                nextpnr_options: [--hx1k, --package, tq144]
+                pnr: next
         toplevel: top
 
 parameters:
