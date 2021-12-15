@@ -5,7 +5,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import Json.Decode as JD exposing (Decoder, field, string)
+import Json.Decode as JD exposing (Decoder, field, string, float)
 
 
 
@@ -29,7 +29,7 @@ type alias Model
   = { products: (List Product), error: Bool, query: String }
 
 
-type alias Product = { thumbnail : String }
+type alias Product = { thumbnail : String, permalink: String, title: String, price: Float }
 
 
 init : () -> (Model, Cmd Msg)
@@ -102,7 +102,12 @@ viewProducts model =
 
 
 viewThumb : Product -> Html Msg
-viewThumb product = img [ src product.thumbnail, style "width" "10%" ] []
+viewThumb product = div [ style "max-width" "20%", style "display" "inline-block"] [
+    p [ style "max-width" "20%"] [text product.title]
+    ,a [href product.permalink] [
+        img [ src product.thumbnail, style "max-width" "100px" ] []
+    ]
+    ]
 
 -- HTTP
 
@@ -127,4 +132,4 @@ productsDecoder =
   field "results" (JD.list productDecoder)
 
 productDecoder : Decoder Product
-productDecoder = JD.map Product (field "thumbnail" string)
+productDecoder = JD.map4 Product (field "thumbnail" string) (field "permalink" string) (field "title" string) (field "price" float)
