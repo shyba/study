@@ -102,7 +102,7 @@ viewProducts model =
 
 
 viewThumb : Product -> Html Msg
-viewThumb product = img [ src product.thumbnail ] []
+viewThumb product = img [ src product.thumbnail, style "width" "10%" ] []
 
 -- HTTP
 
