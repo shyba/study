@@ -1,9 +1,4 @@
 module Main exposing (..)
--- Press a button to send a GET request for random cat GIFs.
---
--- Read how it works:
---   https://guide.elm-lang.org/effects/json.html
---
 
 import Browser
 import Html exposing (..)
@@ -30,10 +25,8 @@ main =
 -- MODEL
 
 
-type Model
-  = Failure
-  | Loading
-  | Success (List Product)
+type alias Model
+  = { products: (List Product), error: Bool, query: String }
 
 
 type alias Product = { thumbnail : String }
@@ -41,7 +34,7 @@ type alias Product = { thumbnail : String }
 
 init : () -> (Model, Cmd Msg)
 init _ =
-  (Loading, getProducts)
+  ((Model [] False ""), getProducts "")
 
 
 
@@ -50,6 +43,7 @@ init _ =
 
 type Msg
   = MorePlease
+  | UpdateQuery String
   | GotProducts (Result Http.Error (List Product))
 
 
@@ -57,15 +51,18 @@ update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
   case msg of
     MorePlease ->
-      (Loading, getProducts)
+      ((Model [] False ""), getProducts model.query)
+
+    UpdateQuery query ->
+        ({ model | query = query }, Cmd.none)
 
     GotProducts result ->
       case result of
         Ok products ->
-          (Success products, Cmd.none)
+          ({ model | products = products }, Cmd.none)
 
         Err _ ->
-          (Failure, Cmd.none)
+          ({ model | error = True } , Cmd.none)
 
 
 
@@ -84,29 +81,24 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
   div []
-    [ h2 [] [ text "Random Cats" ]
+    [ h2 [] [ text "Busca Mercado Livre" ]
     , viewProducts model
-    , button [ onClick MorePlease ] [ input [ value "Type a Query!"] [] ]
+    , Html.form [ onSubmit MorePlease ] [ input [ onInput UpdateQuery ] [text "Search!"] ]
     ]
 
 
 viewProducts : Model -> Html Msg
 viewProducts model =
-  case model of
-    Failure ->
+  case model.error of
+    True ->
       div []
         [ text "Failed to search. "
         , button [ onClick MorePlease ] [ text "Try Again!" ]
         ]
 
-    Loading ->
-      text "Loading..."
 
-    Success [] ->
-      text "Nothing..."
-
-    Success products ->
-      div [] (List.map viewThumb products)
+    False ->
+      div [] (List.map viewThumb model.products)
 
 
 viewThumb : Product -> Html Msg
@@ -115,12 +107,19 @@ viewThumb product = img [ src product.thumbnail ] []
 -- HTTP
 
 
-getProducts : Cmd Msg
-getProducts =
-  Http.get
-    { url = "https://api.mercadolibre.com/sites/MLB/search?q=rk3399#options"
-    , expect = Http.expectJson GotProducts productsDecoder
-    }
+getProducts : String -> Cmd Msg
+getProducts query =
+    case String.isEmpty query of
+         True ->
+            Http.get
+              { url = "https://api.mercadolibre.com/sites/MLB/search?q=rk3399"
+              , expect = Http.expectJson GotProducts productsDecoder
+              }
+         False ->
+            Http.get
+              { url = "https://api.mercadolibre.com/sites/MLB/search?q=" ++ query
+              , expect = Http.expectJson GotProducts productsDecoder
+              }
 
 
 productsDecoder : Decoder (List Product)
