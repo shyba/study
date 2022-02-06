@@ -1,7 +1,7 @@
 const TrackerServer = require('bittorrent-tracker').Server;
 
 const server = new TrackerServer({
-    interval: 1000,
+    interval: 150000,
     udp: false,
     http: false,
     ws: true,
