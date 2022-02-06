@@ -1,6 +1,6 @@
 var WebTorrent = require('webtorrent')
 
-var trackers = ['wss://tracker.btorrent.xyz', 'wss://tracker.openwebtorrent.com']
+var trackers = ['wss://webrtc-aquatic-demo.herokuapp.com']
 
 var rtcConfig = {
   'iceServers': [
