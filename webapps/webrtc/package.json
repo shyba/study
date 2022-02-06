@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "app.js",
+  "browser": {
+    "bittorrent-tracker": false,
+    "./server.js": false
+  },
   "dependencies": {
+    "bittorrent-tracker": "^9.18.3",
     "webtorrent": "^1.8.1"
   },
   "devDependencies": {
