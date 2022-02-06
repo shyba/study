@@ -24,8 +24,8 @@ server.on('listening', () => {
     const wsPort = wsAddr.port
     console.log(`WebSocket tracker: ws://${wsHost}:${wsPort}`)
 })
-
-server.listen(3001, "0.0.0.0")
+const port = process.env.PORT || 3001;
+server.listen(port, "0.0.0.0")
 
 server.on('start', (addr) => console.log('on-start:' + addr))
 server.on('complete', (addr) => console.log('on-complete:' + addr))
