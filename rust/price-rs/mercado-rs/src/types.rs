@@ -1,31 +1,38 @@
-struct Paging {
+use serde::{Deserialize, Serialize};
+
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Paging {
     total: u64,
     primary_results: u32,
     offset: u32,
     limit: u32,
 }
 
-struct Seller {
-    id: String,
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Seller {
+    id: u64,
     permalink: String,
     registration_date: String,
 }
 
-struct Installments {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Installments {
     quantity: u8,
-    amount: u32,
+    amount: f32,
     rate: f32,
     currency_id: String,
 }
 
-struct Address {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Address {
     state_id: String,
     state_name: String,
     city_id: String,
     city_name: String,
 }
 
-struct Shipping {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Shipping {
     free_shipping: bool,
     mode: String,
     tags: Vec<String>,
@@ -33,19 +40,21 @@ struct Shipping {
     store_pick_up: bool
 }
 
-struct Attribute {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Attribute {
     id: String,
     attribute_group_id: String,
     name: String,
-    value_name: String,
+    value_name: Option<String>,
     attribute_group_name: String,
 }
 
-struct SearchResult {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct SearchResult {
     id: String,
     title: String,
     seller: Seller,
-    price: u64,
+    price: f32,
     available_quantity: u32,
     sold_quantity: u32,
     condition: String, // should be enum
@@ -61,12 +70,14 @@ struct SearchResult {
     attributes: Vec<Attribute>
 }
 
-struct Sort {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct Sort {
     id: String,
     name: String
 }
 
-struct SearchResults {
+#[derive(Deserialize, Serialize, Debug)]
+pub struct SearchResults {
     query: String,
     paging: Paging,
     results: Vec<SearchResult>,
