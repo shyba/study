@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 serde_json = { version = "1" }
 serde = { version = "1", features = ["derive"]}
+

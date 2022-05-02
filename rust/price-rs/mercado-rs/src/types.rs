@@ -1,5 +1,10 @@
 use serde::{Deserialize, Serialize};
 
+// todo: find a better name.. this will probably be something else later
+pub struct RequestBuilder {
+    pub base_url: String
+}
+
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Paging {
     total: u64,
