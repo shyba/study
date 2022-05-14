@@ -1,3 +1,5 @@
+mod assembler;
+
 extern crate core;
 
 use std::{env, fs, io};
