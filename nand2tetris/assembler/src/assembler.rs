@@ -74,12 +74,13 @@ enum ParserState {
 fn parse_address(value: String) -> Result<Instruction, String> {
     match value[1..].parse::<u16>() {
         Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
-        Ok(parsed) => Err((format!("Value is too large: {}", value))),
-        Err(e) => Err("Error parsing @<integer>".to_string())
+        Ok(_) => Err(format!("Value is too large: {}", value)),
+        Err(_) => Err("Error parsing @<integer>".to_string())
     }
 }
 
 fn parse(line: String) -> Result<Instruction, String> {
+    let line = line.replace(" ", "");
     if line.starts_with("@") {
         return parse_address(line)
     }
@@ -94,7 +95,7 @@ mod tests {
 
     #[test]
     fn it_parses_address_simple_case() {
-        let case = "@123".to_string();
+        let case = " @ 123 ".to_string();
         let parsed: Instruction = parse(case).expect("fail");
         assert_eq!(parsed, Address(123));
     }
