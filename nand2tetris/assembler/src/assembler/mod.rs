@@ -1,5 +1,3 @@
-use std::num::IntErrorKind::PosOverflow;
-use std::num::ParseIntError;
 mod errors;
 use errors::{ParsingError, ParsingErrorKind};
 
@@ -61,16 +59,6 @@ pub struct ComputeFields {
     compute_op: ComputeOp,
     jump_op: JumpOp,
     destination_op: DestOp,
-}
-
-enum ParserState {
-    Start,
-    Error,
-    GotAt,
-    ParsingAddress(u8, u16),
-    GotDest(DestOp),
-    ParsingComp(DestOp, String),
-    ParsingJump(DestOp, ComputeOp, String),
 }
 
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
