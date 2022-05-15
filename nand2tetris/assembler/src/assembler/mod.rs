@@ -4,6 +4,7 @@ use errors::{ParsingError, ParsingErrorKind};
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
     Address(u16),
+    LabeledAddress(String),
     Compute(ComputeFields),
     Comment(String),
     Label(String),
@@ -64,10 +65,15 @@ pub struct ComputeFields {
 }
 
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
-    match value[1..].parse::<u16>() {
-        Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
-        Ok(_) => Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}),
-        Err(e) => Err(ParsingError {kind: ParsingErrorKind::Generic(e)}),
+    let last_char = value.chars().last();
+    if (last_char >= Some('0')) && last_char <= Some('9') {
+        match value[1..].parse::<u16>() {
+            Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
+            Ok(_) => Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}),
+            Err(e) => Err(ParsingError {kind: ParsingErrorKind::Generic(e)}),
+        }
+    } else {
+        Ok(Instruction::LabeledAddress(value[1..].to_string()))
     }
 }
 
@@ -231,5 +237,9 @@ mod tests {
         ));
         let parsed = parse("(MYLABEL)".to_string()).expect("fail");
         assert_eq!(parsed, Instruction::Label("MYLABEL".to_string()));
+        let parsed = parse("@MYLABEL".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::LabeledAddress("MYLABEL".to_string()));
+        let parsed = parse("".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Nothing);
     }
 }
