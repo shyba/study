@@ -1,5 +1,6 @@
 mod errors;
 use errors::{ParsingError, ParsingErrorKind};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
@@ -64,6 +65,53 @@ pub struct ComputeFields {
     destination_op: DestOp,
 }
 
+impl FromStr for ComputeOp {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let line = match s.split(";").next() {
+            Some(value) => value,
+            None => s
+        };
+        let line = match line.split("=").skip(1).next() {
+            Some(value) => value,
+            None => line
+        };
+        match line {
+            "0" => Ok(ComputeOp::Zero),
+            "1" => Ok(ComputeOp::One),
+            "-1" => Ok(ComputeOp::MinusOne),
+            "D" => Ok(ComputeOp::D),
+            "M" => Ok(ComputeOp::A(true)),
+            "A" => Ok(ComputeOp::A(false)),
+            "!D" => Ok(ComputeOp::NotD),
+            "!M" => Ok(ComputeOp::NotA(true)),
+            "!A" => Ok(ComputeOp::NotA(false)),
+            "-D" => Ok(ComputeOp::MinusD),
+            "-M" => Ok(ComputeOp::MinusA(true)),
+            "-A" => Ok(ComputeOp::MinusA(false)),
+            "D+1" => Ok(ComputeOp::IncD),
+            "M+!" => Ok(ComputeOp::IncA(true)),
+            "A+1" => Ok(ComputeOp::IncA(false)),
+            "D-1" => Ok(ComputeOp::DecD),
+            "M-1" => Ok(ComputeOp::DecA(true)),
+            "A-1" => Ok(ComputeOp::DecA(false)),
+            "D+M" => Ok(ComputeOp::DPlusA(true)),
+            "D+A" => Ok(ComputeOp::DPlusA(false)),
+            "D-M" => Ok(ComputeOp::DMinusA(true)),
+            "D-A" => Ok(ComputeOp::DMinusA(false)),
+            "M-D" => Ok(ComputeOp::AMinusD(true)),
+            "A-D" => Ok(ComputeOp::AMinusD(false)),
+            "D&M" => Ok(ComputeOp::DAndA(true)),
+            "D&A" => Ok(ComputeOp::DAndA(false)),
+            "D|M" => Ok(ComputeOp::DOrA(true)),
+            "D|A" => Ok(ComputeOp::DOrA(false)),
+                _ => Err(ParsingError {kind: ParsingErrorKind::InvalidComputation})
+        }
+
+    }
+}
+
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     let last_char = value.chars().last();
     if (last_char >= Some('0')) && last_char <= Some('9') {
@@ -91,48 +139,6 @@ fn parse_dest(line: &str) -> Result<DestOp, ParsingError> {
             Some("ADM") => Ok(DestOp::ADM),
             _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
         }
-    }
-}
-
-fn parse_computation(line: &str) -> Result<ComputeOp, ParsingError> {
-    let line = match line.split(";").next() {
-        Some(value) => value,
-        None => line
-    };
-    let line = match line.split("=").skip(1).next() {
-        Some(value) => value,
-        None => line
-    };
-    match line {
-        "0" => Ok(ComputeOp::Zero),
-        "1" => Ok(ComputeOp::One),
-        "-1" => Ok(ComputeOp::MinusOne),
-        "D" => Ok(ComputeOp::D),
-        "M" => Ok(ComputeOp::A(true)),
-        "A" => Ok(ComputeOp::A(false)),
-        "!D" => Ok(ComputeOp::NotD),
-        "!M" => Ok(ComputeOp::NotA(true)),
-        "!A" => Ok(ComputeOp::NotA(false)),
-        "-D" => Ok(ComputeOp::MinusD),
-        "-M" => Ok(ComputeOp::MinusA(true)),
-        "-A" => Ok(ComputeOp::MinusA(false)),
-        "D+1" => Ok(ComputeOp::IncD),
-        "M+!" => Ok(ComputeOp::IncA(true)),
-        "A+1" => Ok(ComputeOp::IncA(false)),
-        "D-1" => Ok(ComputeOp::DecD),
-        "M-1" => Ok(ComputeOp::DecA(true)),
-        "A-1" => Ok(ComputeOp::DecA(false)),
-        "D+M" => Ok(ComputeOp::DPlusA(true)),
-        "D+A" => Ok(ComputeOp::DPlusA(false)),
-        "D-M" => Ok(ComputeOp::DMinusA(true)),
-        "D-A" => Ok(ComputeOp::DMinusA(false)),
-        "M-D" => Ok(ComputeOp::AMinusD(true)),
-        "A-D" => Ok(ComputeOp::AMinusD(false)),
-        "D&M" => Ok(ComputeOp::DAndA(true)),
-        "D&A" => Ok(ComputeOp::DAndA(false)),
-        "D|M" => Ok(ComputeOp::DOrA(true)),
-        "D|A" => Ok(ComputeOp::DOrA(false)),
-            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidComputation})
     }
 }
 
@@ -168,7 +174,7 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
         Ok(Instruction::Comment(original_line))
     } else {
         let dest = parse_dest(&line)?;
-        let comp = parse_computation(&line)?;
+        let comp = ComputeOp::from_str(&line)?;
         let jump = parse_jump(&line)?;
         Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
     }
