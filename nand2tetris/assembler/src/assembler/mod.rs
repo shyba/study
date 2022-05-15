@@ -6,6 +6,8 @@ pub enum Instruction {
     Address(u16),
     Compute(ComputeFields),
     Comment(String),
+    Label(String),
+    Nothing,
 }
 
 #[derive(Debug, PartialEq)]
@@ -153,7 +155,11 @@ pub fn parse(line: String) -> Result<Instruction, ParsingError> {
     let line = line.replace(" ", "");
     if line.starts_with("@") {
         parse_address(line)
-    } else if (line == "") | line.starts_with("//") {
+    } else if line == "" {
+        Ok(Instruction::Nothing)
+    } else if line.starts_with("(") {
+        Ok(Instruction::Label(line.chars().skip(1).take(line.len()-2).collect()))
+    } else if line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
     } else {
         let dest = parse_dest(line.clone())?;
@@ -223,5 +229,7 @@ mod tests {
                 jump_op: JumpOp::Nothing
             }
         ));
+        let parsed = parse("(MYLABEL)".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Label("MYLABEL".to_string()));
     }
 }
