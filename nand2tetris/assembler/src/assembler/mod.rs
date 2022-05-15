@@ -81,11 +81,29 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     }
 }
 
+fn parse_dest(line: String) -> Result<DestOp, ParsingError> {
+    if !line.contains("=") {
+        Ok(DestOp::Nothing)
+    } else {
+        match line.split("=").nth(0) {
+            Some("M") => Ok(DestOp::M),
+            Some("D") => Ok(DestOp::D),
+            Some("A") => Ok(DestOp::A),
+            Some("DM") => Ok(DestOp::DM),
+            Some("AM") => Ok(DestOp::AM),
+            Some("AD") => Ok(DestOp::AD),
+            Some("ADM") => Ok(DestOp::ADM),
+            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
+        }
+    }
+}
+
 fn parse(line: String) -> Result<Instruction, ParsingError> {
     let line = line.replace(" ", "");
     if line.starts_with("@") {
         return parse_address(line);
     }
+    let dest = parse_dest(line.clone());
     Ok(Instruction::Comment(line))
 }
 
