@@ -112,6 +112,27 @@ impl FromStr for ComputeOp {
     }
 }
 
+impl FromStr for DestOp {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.contains("=") {
+            Ok(DestOp::Nothing)
+        } else {
+            match s.split("=").nth(0) {
+                Some("M") => Ok(DestOp::M),
+                Some("D") => Ok(DestOp::D),
+                Some("A") => Ok(DestOp::A),
+                Some("DM") => Ok(DestOp::DM),
+                Some("AM") => Ok(DestOp::AM),
+                Some("AD") => Ok(DestOp::AD),
+                Some("ADM") => Ok(DestOp::ADM),
+                _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
+            }
+        }
+    }
+}
+
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     let last_char = value.chars().last();
     if (last_char >= Some('0')) && last_char <= Some('9') {
@@ -122,23 +143,6 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
         }
     } else {
         Ok(Instruction::LabeledAddress(value[1..].to_string()))
-    }
-}
-
-fn parse_dest(line: &str) -> Result<DestOp, ParsingError> {
-    if !line.contains("=") {
-        Ok(DestOp::Nothing)
-    } else {
-        match line.split("=").nth(0) {
-            Some("M") => Ok(DestOp::M),
-            Some("D") => Ok(DestOp::D),
-            Some("A") => Ok(DestOp::A),
-            Some("DM") => Ok(DestOp::DM),
-            Some("AM") => Ok(DestOp::AM),
-            Some("AD") => Ok(DestOp::AD),
-            Some("ADM") => Ok(DestOp::ADM),
-            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
-        }
     }
 }
 
@@ -173,7 +177,7 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     } else if line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
     } else {
-        let dest = parse_dest(&line)?;
+        let dest = DestOp::from_str(&line)?;
         let comp = ComputeOp::from_str(&line)?;
         let jump = parse_jump(&line)?;
         Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
