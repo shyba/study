@@ -2,8 +2,8 @@ mod assembler;
 
 extern crate core;
 
-use std::{env, fs, io};
 use std::path::{Path, PathBuf};
+use std::{env, fs, io};
 
 fn main() {
     let files = match env::args().len() {
@@ -22,7 +22,7 @@ fn list_asm_files() -> io::Result<Vec<PathBuf>> {
         let entry = entry?;
         match entry.path() {
             p if p.ends_with("asm") => files.push(entry.path()),
-            _ => continue
+            _ => continue,
         }
     }
     Ok(files)
@@ -33,7 +33,7 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
     for name in env::args().skip(1) {
         match Path::new(&name) {
             p if p.exists() && !p.is_dir() => files.push(p.to_path_buf()),
-            _ => continue
+            _ => continue,
         }
     }
     Ok(files)

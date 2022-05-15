@@ -1,11 +1,13 @@
 use std::num::IntErrorKind::PosOverflow;
 use std::num::ParseIntError;
+mod errors;
+use errors::{ParsingError, ParsingErrorKind};
 
 #[derive(Debug, PartialEq)]
 pub enum Instruction {
     Address(u16),
     Compute(ComputeFields),
-    Comment(String)
+    Comment(String),
 }
 
 #[derive(Debug, PartialEq)]
@@ -68,30 +70,29 @@ enum ParserState {
     ParsingAddress(u8, u16),
     GotDest(DestOp),
     ParsingComp(DestOp, String),
-    ParsingJump(DestOp, ComputeOp, String)
+    ParsingJump(DestOp, ComputeOp, String),
 }
 
-fn parse_address(value: String) -> Result<Instruction, String> {
+fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     match value[1..].parse::<u16>() {
         Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
-        Ok(_) => Err(format!("Value is too large: {}", value)),
-        Err(_) => Err("Error parsing @<integer>".to_string())
+        Ok(_) => Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}),
+        Err(e) => Err(ParsingError {kind: ParsingErrorKind::Generic(e)}),
     }
 }
 
-fn parse(line: String) -> Result<Instruction, String> {
+fn parse(line: String) -> Result<Instruction, ParsingError> {
     let line = line.replace(" ", "");
     if line.starts_with("@") {
-        return parse_address(line)
+        return parse_address(line);
     }
     Ok(Instruction::Comment(line))
-
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::assembler::*;
     use crate::assembler::Instruction::Address;
+    use crate::assembler::*;
 
     #[test]
     fn it_parses_address_simple_case() {
@@ -111,6 +112,6 @@ mod tests {
     fn it_fails_for_more_than_15_bits() {
         let case = "@32768".to_string();
         let parsed = parse(case);
-        assert_eq!(parsed, Err("Value is too large: @32768".to_string()));
+        assert_eq!(parsed, Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}));
     }
 }
