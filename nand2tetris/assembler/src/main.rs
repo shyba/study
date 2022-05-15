@@ -4,15 +4,20 @@ extern crate core;
 
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use std::io::BufRead;
 
 fn main() {
     let files = match env::args().len() {
         x if x == 1 => list_asm_files(),
         _ => args_to_files(),
     };
-    if files.expect("Error reading directory/files.").len() == 0 {
+    let files = files.expect("Error reading directory/files.");
+    if files.len() == 0 {
         println!("Nothing to assemble!");
         return;
+    }
+    for file in files {
+        parse_file(file).expect("Error parsing file.");
     }
 }
 
@@ -37,4 +42,15 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
         }
     }
     Ok(files)
+}
+
+fn parse_file(path: PathBuf) -> io::Result<()> {
+    let file = fs::File::open(path)?;
+    for line in io::BufReader::new(file).lines() {
+        let line = line.expect("Error reading line");
+        println!("{}", line.clone());
+        println!("{:?}", assembler::parse(line.to_string()));
+        println!("---")
+    }
+    Ok(())
 }

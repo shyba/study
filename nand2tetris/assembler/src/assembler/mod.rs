@@ -160,12 +160,12 @@ fn parse_jump(line: String) -> Result<JumpOp, ParsingError> {
     }
 }
 
-fn parse(line: String) -> Result<Instruction, ParsingError> {
+pub fn parse(line: String) -> Result<Instruction, ParsingError> {
     let original_line = line.clone();
     let line = line.replace(" ", "");
     if line.starts_with("@") {
         parse_address(line)
-    } else if line.starts_with("//") {
+    } else if (line == "") | line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
     } else {
         let dest = parse_dest(line.clone())?;
