@@ -179,9 +179,75 @@ fn assemble_address(from_value: u16) -> String {
     format!("0{:015b}", from_value)
 }
 
+fn assemble_compute_op(op: ComputeOp) -> &'static str {
+    match op {
+        ComputeOp::Zero =>           "0101010",
+        ComputeOp::One =>            "0111111",
+        ComputeOp::MinusOne =>       "0111010",
+        ComputeOp::D =>              "0001100",
+        ComputeOp::A(true) =>        "1110000",
+        ComputeOp::A(false) =>       "0110000",
+        ComputeOp::NotD =>           "0001101",
+        ComputeOp::NotA(true) =>     "1110001",
+        ComputeOp::NotA(false) =>    "0110001",
+        ComputeOp::MinusD =>         "0001111",
+        ComputeOp::MinusA(true) =>   "1110011",
+        ComputeOp::MinusA(false) =>  "0110011",
+        ComputeOp::IncD =>           "0011111",
+        ComputeOp::IncA(true) =>     "1110111",
+        ComputeOp::IncA(false) =>    "0110111",
+        ComputeOp::DecD =>           "0001110",
+        ComputeOp::DecA(true) =>     "1110010",
+        ComputeOp::DecA(false) =>    "0110010",
+        ComputeOp::DPlusA(true) =>   "1000010",
+        ComputeOp::DPlusA(false) =>  "0000010",
+        ComputeOp::DMinusA(true) =>  "1010011",
+        ComputeOp::DMinusA(false) => "0010011",
+        ComputeOp::AMinusD(true) =>  "1000111",
+        ComputeOp::AMinusD(false) => "0000111",
+        ComputeOp::DAndA(true) =>    "1000000",
+        ComputeOp::DAndA(false) =>   "0000000",
+        ComputeOp::DOrA(true) =>     "1010101",
+        ComputeOp::DOrA(false) =>    "0010101",
+    }
+}
+
+fn assemble_dest_op(op: DestOp) -> &'static str {
+    match op {
+        DestOp::Nothing => "000",
+        DestOp::M =>       "001",
+        DestOp::D =>       "010",
+        DestOp::DM =>      "011",
+        DestOp::A =>       "100",
+        DestOp::AM =>      "101",
+        DestOp::AD =>      "110",
+        DestOp::ADM =>     "111",
+    }
+
+}
+
+fn assemble_jump_op(op: JumpOp) -> &'static str {
+    match op {
+        JumpOp::Nothing =>       "000",
+        JumpOp::Greater =>       "001",
+        JumpOp::Equal =>         "010",
+        JumpOp::GreaterEqual =>  "011",
+        JumpOp::Lower =>         "100",
+        JumpOp::NotEqual =>      "101",
+        JumpOp::LessEqual =>     "110",
+        JumpOp::Unconditional => "111",
+    }
+
+}
+
+fn assemble_compute(fields: ComputeFields) -> String {
+    format!("111{}{}{}", assemble_compute_op(fields.compute_op), assemble_dest_op(fields.destination_op), assemble_jump_op(fields.jump_op))
+}
+
 pub fn assemble(instruction: Instruction) -> String {
     match instruction {
         Instruction::Address(addr) => assemble_address(addr),
+        Instruction::Compute(fields) => assemble_compute(fields),
         _ => String::new(),
     }
 }
@@ -195,6 +261,17 @@ mod tests {
     fn it_assembles_addresses() {
         assert_eq!("0000000000000010", assemble(Instruction::Address(2)));
         assert_eq!("0111111111111111", assemble(Instruction::Address(0x7fff)));
+    }
+
+    #[test]
+    fn it_assembles_computation_cases() {
+        assert_eq!("1110111111001000", assemble(Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::One,
+                destination_op: DestOp::M,
+                jump_op: JumpOp::Nothing
+            }
+        )));
     }
 
     #[test]
