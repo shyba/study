@@ -175,10 +175,27 @@ pub fn parse(line: String) -> Result<Instruction, ParsingError> {
     }
 }
 
+fn assemble_address(from_value: u16) -> String {
+    format!("0{:015b}", from_value)
+}
+
+pub fn assemble(instruction: Instruction) -> String {
+    match instruction {
+        Instruction::Address(addr) => assemble_address(addr),
+        _ => String::new(),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use crate::assembler::Instruction::Address;
     use crate::assembler::*;
+
+    #[test]
+    fn it_assembles_addresses() {
+        assert_eq!("0000000000000010", assemble(Instruction::Address(2)));
+        assert_eq!("0111111111111111", assemble(Instruction::Address(0x7fff)));
+    }
 
     #[test]
     fn it_parses_address_simple_case() {
