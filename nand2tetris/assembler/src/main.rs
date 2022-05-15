@@ -37,7 +37,9 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
     let mut files: Vec<PathBuf> = vec![];
     for name in env::args().skip(1) {
         match Path::new(&name) {
-            p if p.exists() && !p.is_dir() => files.push(p.to_path_buf()),
+            p if p.exists() && !p.is_dir() => {
+                files.push(name.into())
+            },
             _ => continue,
         }
     }
@@ -47,9 +49,9 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
 fn parse_file(path: PathBuf) -> io::Result<()> {
     let file = fs::File::open(path)?;
     for line in io::BufReader::new(file).lines() {
-        let line = line.expect("Error reading line");
-        println!("{}", line.clone());
-        println!("{:?}", assembler::parse(line.to_string()));
+        let line = line?;
+        println!("{}", line);
+        println!("{:?}", assembler::parse(&line));
         println!("---")
     }
     Ok(())
