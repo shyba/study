@@ -9,6 +9,7 @@ pub enum ParsingErrorKind {
     Generic(std::num::ParseIntError),
     ValueTooLarge,
     InvalidDestination,
+    InvalidComputation,
 }
 
 impl fmt::Display for ParsingError {
@@ -16,7 +17,8 @@ impl fmt::Display for ParsingError {
         match &self.kind {
             ParsingErrorKind::Generic(e) => write!(f, "Error parsing address: {}", e),
             ParsingErrorKind::ValueTooLarge => write!(f, "Value should be at most 15 bits."),
-            ParsingErrorKind::InvalidDestination => write!(f, "Invalid destination register.")
+            ParsingErrorKind::InvalidDestination => write!(f, "Invalid destination register."),
+            ParsingErrorKind::InvalidComputation => write!(f, "Invalid computation.")
         }
     }
 }

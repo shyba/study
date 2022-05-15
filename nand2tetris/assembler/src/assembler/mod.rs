@@ -98,6 +98,44 @@ fn parse_dest(line: String) -> Result<DestOp, ParsingError> {
     }
 }
 
+fn parse_computation(line: String) -> Result<ComputeOp, ParsingError> {
+    let line = match line.split(";").next() {
+        Some(value) => value.to_string(),
+        None => line
+    };
+    match line.as_str() {
+        "0" => Ok(ComputeOp::Zero),
+        "1" => Ok(ComputeOp::One),
+        "-1" => Ok(ComputeOp::MinusOne),
+        "D" => Ok(ComputeOp::D),
+        "M" => Ok(ComputeOp::A(true)),
+        "A" => Ok(ComputeOp::A(false)),
+        "!D" => Ok(ComputeOp::NotD),
+        "!M" => Ok(ComputeOp::NotA(true)),
+        "!A" => Ok(ComputeOp::NotA(false)),
+        "-D" => Ok(ComputeOp::MinusD),
+        "-M" => Ok(ComputeOp::MinusA(true)),
+        "-A" => Ok(ComputeOp::MinusA(false)),
+        "D+1" => Ok(ComputeOp::IncD),
+        "M+!" => Ok(ComputeOp::IncA(true)),
+        "A+1" => Ok(ComputeOp::IncA(false)),
+        "D-1" => Ok(ComputeOp::DecD),
+        "M-1" => Ok(ComputeOp::DecA(true)),
+        "A-1" => Ok(ComputeOp::DecA(false)),
+        "D+M" => Ok(ComputeOp::DPlusA(true)),
+        "D+A" => Ok(ComputeOp::DPlusA(false)),
+        "D-M" => Ok(ComputeOp::DMinusA(true)),
+        "D-A" => Ok(ComputeOp::DMinusA(false)),
+        "M-D" => Ok(ComputeOp::AMinusD(true)),
+        "A-D" => Ok(ComputeOp::AMinusD(false)),
+        "D&M" => Ok(ComputeOp::DAndA(true)),
+        "D&A" => Ok(ComputeOp::DAndA(false)),
+        "D|M" => Ok(ComputeOp::DOrA(true)),
+        "D|A" => Ok(ComputeOp::DOrA(false)),
+            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
+    }
+}
+
 fn parse(line: String) -> Result<Instruction, ParsingError> {
     let line = line.replace(" ", "");
     if line.starts_with("@") {
