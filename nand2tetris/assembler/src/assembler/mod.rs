@@ -133,6 +133,29 @@ impl FromStr for DestOp {
     }
 }
 
+impl FromStr for JumpOp {
+    type Err = ParsingError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.contains(";") {
+            return Ok(JumpOp::Nothing);
+        }
+
+        let s = s.split(";").skip(1).next().unwrap_or(s);
+
+        match s {
+            "JGT" => Ok(JumpOp::Greater),
+            "JEQ" => Ok(JumpOp::Equal),
+            "JGE" => Ok(JumpOp::GreaterEqual),
+            "JLT" => Ok(JumpOp::Lower),
+            "JNE" => Ok(JumpOp::NotEqual),
+            "JLE" => Ok(JumpOp::LessEqual),
+            "JMP" => Ok(JumpOp::Unconditional),
+            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidJump})
+        }
+    }
+}
+
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     let last_char = value.chars().last();
     if (last_char >= Some('0')) && last_char <= Some('9') {
@@ -143,25 +166,6 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
         }
     } else {
         Ok(Instruction::LabeledAddress(value[1..].to_string()))
-    }
-}
-
-fn parse_jump(line: &str) -> Result<JumpOp, ParsingError> {
-    if !line.contains(";") {
-        return Ok(JumpOp::Nothing);
-    }
-
-    let line = line.split(";").skip(1).next().unwrap_or(line);
-
-    match line {
-        "JGT" => Ok(JumpOp::Greater),
-        "JEQ" => Ok(JumpOp::Equal),
-        "JGE" => Ok(JumpOp::GreaterEqual),
-        "JLT" => Ok(JumpOp::Lower),
-        "JNE" => Ok(JumpOp::NotEqual),
-        "JLE" => Ok(JumpOp::LessEqual),
-        "JMP" => Ok(JumpOp::Unconditional),
-        _ => Err(ParsingError {kind: ParsingErrorKind::InvalidJump})
     }
 }
 
@@ -179,7 +183,7 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     } else {
         let dest = DestOp::from_str(&line)?;
         let comp = ComputeOp::from_str(&line)?;
-        let jump = parse_jump(&line)?;
+        let jump = JumpOp::from_str(&line)?;
         Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
     }
 }
