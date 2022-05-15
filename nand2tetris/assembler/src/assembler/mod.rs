@@ -103,6 +103,10 @@ fn parse_computation(line: String) -> Result<ComputeOp, ParsingError> {
         Some(value) => value.to_string(),
         None => line
     };
+    let line = match line.split("=").skip(1).next() {
+        Some(value) => value.to_string(),
+        None => line
+    };
     match line.as_str() {
         "0" => Ok(ComputeOp::Zero),
         "1" => Ok(ComputeOp::One),
@@ -132,17 +136,43 @@ fn parse_computation(line: String) -> Result<ComputeOp, ParsingError> {
         "D&A" => Ok(ComputeOp::DAndA(false)),
         "D|M" => Ok(ComputeOp::DOrA(true)),
         "D|A" => Ok(ComputeOp::DOrA(false)),
-            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
+            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidComputation})
+    }
+}
+
+fn parse_jump(line: String) -> Result<JumpOp, ParsingError> {
+    if !line.contains(";") {
+        return Ok(JumpOp::Nothing);
+    }
+    let line = match line.split(";").skip(1).next() {
+        Some(value) => value.to_string(),
+        None => line
+    };
+    match line.as_str() {
+        "JGT" => Ok(JumpOp::Greater),
+        "JEQ" => Ok(JumpOp::Equal),
+        "JGE" => Ok(JumpOp::GreaterEqual),
+        "JLT" => Ok(JumpOp::Lower),
+        "JNE" => Ok(JumpOp::NotEqual),
+        "JLE" => Ok(JumpOp::LessEqual),
+        "JMP" => Ok(JumpOp::Unconditional),
+        _ => Err(ParsingError {kind: ParsingErrorKind::InvalidJump})
     }
 }
 
 fn parse(line: String) -> Result<Instruction, ParsingError> {
+    let original_line = line.clone();
     let line = line.replace(" ", "");
     if line.starts_with("@") {
-        return parse_address(line);
+        parse_address(line)
+    } else if line.starts_with("//") {
+        Ok(Instruction::Comment(original_line))
+    } else {
+        let dest = parse_dest(line.clone())?;
+        let comp = parse_computation(line.clone())?;
+        let jump = parse_jump(line.clone())?;
+        Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
     }
-    let dest = parse_dest(line.clone());
-    Ok(Instruction::Comment(line))
 }
 
 #[cfg(test)]
@@ -169,5 +199,41 @@ mod tests {
         let case = "@32768".to_string();
         let parsed = parse(case);
         assert_eq!(parsed, Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}));
+    }
+
+    #[test]
+    fn it_parses_simple_cases() {
+        let parsed = parse("0;JMP".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::Zero,
+                destination_op: DestOp::Nothing,
+                jump_op: JumpOp::Unconditional
+            }
+        ));
+        let parsed = parse("M=D+1;JGE".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::IncD,
+                destination_op: DestOp::M,
+                jump_op: JumpOp::GreaterEqual
+            }
+        ));
+        let parsed = parse("D-1;JLT".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::DecD,
+                destination_op: DestOp::Nothing,
+                jump_op: JumpOp::Lower
+            }
+        ));
+        let parsed = parse("M=M-1".to_string()).expect("fail");
+        assert_eq!(parsed, Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                destination_op: DestOp::M,
+                jump_op: JumpOp::Nothing
+            }
+        ));
     }
 }

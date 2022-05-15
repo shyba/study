@@ -10,6 +10,7 @@ pub enum ParsingErrorKind {
     ValueTooLarge,
     InvalidDestination,
     InvalidComputation,
+    InvalidJump,
 }
 
 impl fmt::Display for ParsingError {
@@ -18,7 +19,8 @@ impl fmt::Display for ParsingError {
             ParsingErrorKind::Generic(e) => write!(f, "Error parsing address: {}", e),
             ParsingErrorKind::ValueTooLarge => write!(f, "Value should be at most 15 bits."),
             ParsingErrorKind::InvalidDestination => write!(f, "Invalid destination register."),
-            ParsingErrorKind::InvalidComputation => write!(f, "Invalid computation.")
+            ParsingErrorKind::InvalidComputation => write!(f, "Invalid computation expression."),
+            ParsingErrorKind::InvalidJump => write!(f, "Invalid jump expression."),
         }
     }
 }
