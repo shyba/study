@@ -157,15 +157,40 @@ impl FromStr for JumpOp {
 }
 
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
-    let last_char = value.chars().last();
-    if (last_char >= Some('0')) && last_char <= Some('9') {
+    let is_label = value.chars().skip(1).any(|c| {c > '9' || c < '0'});
+    if !is_label {
         match value[1..].parse::<u16>() {
             Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
             Ok(_) => Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}),
             Err(e) => Err(ParsingError {kind: ParsingErrorKind::Generic(e)}),
         }
     } else {
-        Ok(Instruction::LabeledAddress(value[1..].to_string()))
+        match &value[1..] {
+            "R0" => Ok(Instruction::Address(0)),
+            "R1" => Ok(Instruction::Address(1)),
+            "R2" => Ok(Instruction::Address(2)),
+            "R3" => Ok(Instruction::Address(3)),
+            "R4" => Ok(Instruction::Address(4)),
+            "R5" => Ok(Instruction::Address(5)),
+            "R6" => Ok(Instruction::Address(6)),
+            "R7" => Ok(Instruction::Address(7)),
+            "R8" => Ok(Instruction::Address(8)),
+            "R9" => Ok(Instruction::Address(9)),
+            "R10" => Ok(Instruction::Address(10)),
+            "R11" => Ok(Instruction::Address(11)),
+            "R12" => Ok(Instruction::Address(12)),
+            "R13" => Ok(Instruction::Address(13)),
+            "R14" => Ok(Instruction::Address(14)),
+            "R15" => Ok(Instruction::Address(15)),
+            "SP" => Ok(Instruction::Address(0)),
+            "LCL" => Ok(Instruction::Address(1)),
+            "ARG" => Ok(Instruction::Address(2)),
+            "THIS" => Ok(Instruction::Address(3)),
+            "THAT" => Ok(Instruction::Address(4)),
+            "SCREEN" => Ok(Instruction::Address(16384)),
+            "KBD" => Ok(Instruction::Address(24576)),
+            _ => Ok(Instruction::LabeledAddress(value[1..].to_string()))
+        }
     }
 }
 
@@ -269,6 +294,11 @@ pub fn assemble(instruction: Instruction) -> String {
 mod tests {
     use crate::assembler::Instruction::Address;
     use crate::assembler::*;
+
+    #[test]
+    fn parse_and_assemble_with_label() {
+        assert_eq!("0000000000000000", assemble(parse("@R0").unwrap()));
+    }
 
     #[test]
     fn it_assembles_addresses() {
