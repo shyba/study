@@ -62,12 +62,15 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
         let mut output_path = file;
         output_path.set_extension("hack");
         let mut output_file = io::BufWriter::new(fs::File::create(output_path)?);
+        let mut varible_symbol_slot = 16..;
         println!("Second pass");
         for instruction in first_pass {
             let assemble = match instruction {
                 assembler::Instruction::LabeledAddress(name) => {
                     if !label_table.contains_key(&name) {
-                        panic!("Jump to unknown label: {}", name);
+                        let value = varible_symbol_slot.next().unwrap() as u16;
+                        label_table.insert(name, value);
+                        assembler::assemble_address(&value)
                     } else {
                         let value = label_table.get(&name).unwrap();
                         assembler::assemble_address(value)
