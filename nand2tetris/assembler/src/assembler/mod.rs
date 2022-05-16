@@ -91,7 +91,7 @@ impl FromStr for ComputeOp {
             "-M" => Ok(ComputeOp::MinusA(true)),
             "-A" => Ok(ComputeOp::MinusA(false)),
             "D+1" => Ok(ComputeOp::IncD),
-            "M+!" => Ok(ComputeOp::IncA(true)),
+            "M+1" => Ok(ComputeOp::IncA(true)),
             "A+1" => Ok(ComputeOp::IncA(false)),
             "D-1" => Ok(ComputeOp::DecD),
             "M-1" => Ok(ComputeOp::DecA(true)),
@@ -124,8 +124,11 @@ impl FromStr for DestOp {
                 Some("D") => Ok(DestOp::D),
                 Some("A") => Ok(DestOp::A),
                 Some("DM") => Ok(DestOp::DM),
+                Some("MD") => Ok(DestOp::DM),
                 Some("AM") => Ok(DestOp::AM),
+                Some("MA") => Ok(DestOp::AM),
                 Some("AD") => Ok(DestOp::AD),
+                Some("DA") => Ok(DestOp::AD),
                 Some("ADM") => Ok(DestOp::ADM),
                 _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
             }
