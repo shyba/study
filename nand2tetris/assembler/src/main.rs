@@ -17,7 +17,9 @@ fn main() {
         return;
     }
     for file in files {
-        parse_file(file).expect("Error parsing file.");
+        for instruction in parse_file(file).expect("Error parsing file.") {
+            println!("{}", assembler::assemble(instruction));
+        }
     }
 }
 
@@ -46,13 +48,16 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
     Ok(files)
 }
 
-fn parse_file(path: PathBuf) -> io::Result<()> {
+fn parse_file(path: PathBuf) -> io::Result<Vec<assembler::Instruction>> {
+    let mut instructions = vec![];
     let file = fs::File::open(path)?;
     for line in io::BufReader::new(file).lines() {
         let line = line?;
         println!("{}", line);
-        println!("{:?}", assembler::parse(&line));
+        let instruction = assembler::parse(&line).unwrap();
+        println!("{:?}", instruction);
+        instructions.push(instruction);
         println!("---")
     }
-    Ok(())
+    Ok(instructions)
 }
