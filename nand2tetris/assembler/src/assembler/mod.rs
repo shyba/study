@@ -206,6 +206,10 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     } else if line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
     } else {
+        let line = match line.find("//") {
+            Some(idx) => &line[..idx],
+            None => &line
+        };
         let dest = DestOp::from_str(&line)?;
         let comp = ComputeOp::from_str(&line)?;
         let jump = JumpOp::from_str(&line)?;
@@ -362,6 +366,14 @@ mod tests {
                 compute_op: ComputeOp::DecD,
                 destination_op: DestOp::Nothing,
                 jump_op: JumpOp::Lower
+            }
+        ));
+        let parsed = parse("M=M-1 // what is that?").expect("fail");
+        assert_eq!(parsed, Instruction::Compute(
+            ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                destination_op: DestOp::M,
+                jump_op: JumpOp::Nothing
             }
         ));
         let parsed = parse("M=M-1").expect("fail");
