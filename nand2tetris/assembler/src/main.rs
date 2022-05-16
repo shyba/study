@@ -4,7 +4,7 @@ extern crate core;
 
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 
 fn main() {
     let files = match env::args().len() {
@@ -16,11 +16,7 @@ fn main() {
         println!("Nothing to assemble!");
         return;
     }
-    for file in files {
-        for instruction in parse_file(file).expect("Error parsing file.") {
-            println!("{}", assembler::assemble(instruction));
-        }
-    }
+    process_file(files).unwrap();
 }
 
 fn list_asm_files() -> io::Result<Vec<PathBuf>> {
@@ -46,6 +42,44 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
         }
     }
     Ok(files)
+}
+
+fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
+    for file in files {
+        let instructions = parse_file(file.clone()).unwrap();
+        let mut first_pass: Vec<assembler::Instruction> = vec![];
+        let mut label_table = std::collections::HashMap::new();
+        for instruction in instructions {
+            println!("{}", assembler::assemble(&instruction));
+            match instruction {
+                assembler::Instruction::Address(_) => first_pass.push(instruction),
+                assembler::Instruction::LabeledAddress(_) => first_pass.push(instruction),
+                assembler::Instruction::Compute(_) => first_pass.push(instruction),
+                assembler::Instruction::Label(name) => {label_table.insert(name, first_pass.len() as u16);},
+                _ => ()
+            }
+        }
+        let mut output_path = file;
+        output_path.set_extension("hack");
+        let mut output_file = io::BufWriter::new(fs::File::create(output_path)?);
+        println!("Second pass");
+        for instruction in first_pass {
+            let assemble = match instruction {
+                assembler::Instruction::LabeledAddress(name) => {
+                    if !label_table.contains_key(&name) {
+                        panic!("Jump to unknown label: {}", name);
+                    } else {
+                        let value = label_table.get(&name).unwrap();
+                        assembler::assemble_address(value)
+                    }
+                }
+                _ => assembler::assemble(&instruction)
+            };
+            println!("{}", assemble);
+            writeln!(&mut output_file, "{}", assemble)?;
+        }
+    }
+    Ok(())
 }
 
 fn parse_file(path: PathBuf) -> io::Result<Vec<assembler::Instruction>> {

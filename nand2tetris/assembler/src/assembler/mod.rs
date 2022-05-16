@@ -217,11 +217,11 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     }
 }
 
-fn assemble_address(from_value: u16) -> String {
+pub fn assemble_address(from_value: &u16) -> String {
     format!("0{:015b}", from_value)
 }
 
-fn assemble_compute_op(op: ComputeOp) -> &'static str {
+fn assemble_compute_op(op: &ComputeOp) -> &'static str {
     match op {
         ComputeOp::Zero =>           "0101010",
         ComputeOp::One =>            "0111111",
@@ -254,7 +254,7 @@ fn assemble_compute_op(op: ComputeOp) -> &'static str {
     }
 }
 
-fn assemble_dest_op(op: DestOp) -> &'static str {
+fn assemble_dest_op(op: &DestOp) -> &'static str {
     match op {
         DestOp::Nothing => "000",
         DestOp::M =>       "001",
@@ -268,7 +268,7 @@ fn assemble_dest_op(op: DestOp) -> &'static str {
 
 }
 
-fn assemble_jump_op(op: JumpOp) -> &'static str {
+fn assemble_jump_op(op: &JumpOp) -> &'static str {
     match op {
         JumpOp::Nothing =>       "000",
         JumpOp::Greater =>       "001",
@@ -282,14 +282,14 @@ fn assemble_jump_op(op: JumpOp) -> &'static str {
 
 }
 
-fn assemble_compute(fields: ComputeFields) -> String {
-    format!("111{}{}{}", assemble_compute_op(fields.compute_op), assemble_dest_op(fields.destination_op), assemble_jump_op(fields.jump_op))
+fn assemble_compute(fields: &ComputeFields) -> String {
+    format!("111{}{}{}", assemble_compute_op(&fields.compute_op), assemble_dest_op(&fields.destination_op), assemble_jump_op(&fields.jump_op))
 }
 
-pub fn assemble(instruction: Instruction) -> String {
+pub fn assemble(instruction: &Instruction) -> String {
     match instruction {
         Instruction::Address(addr) => assemble_address(addr),
-        Instruction::Compute(fields) => assemble_compute(fields),
+        Instruction::Compute(fields) => assemble_compute(&fields),
         _ => String::new(),
     }
 }
@@ -301,18 +301,18 @@ mod tests {
 
     #[test]
     fn parse_and_assemble_with_label() {
-        assert_eq!("0000000000000000", assemble(parse("@R0").unwrap()));
+        assert_eq!("0000000000000000", assemble(&parse("@R0").unwrap()));
     }
 
     #[test]
     fn it_assembles_addresses() {
-        assert_eq!("0000000000000010", assemble(Instruction::Address(2)));
-        assert_eq!("0111111111111111", assemble(Instruction::Address(0x7fff)));
+        assert_eq!("0000000000000010", assemble(&Instruction::Address(2)));
+        assert_eq!("0111111111111111", assemble(&Instruction::Address(0x7fff)));
     }
 
     #[test]
     fn it_assembles_computation_cases() {
-        assert_eq!("1110111111001000", assemble(Instruction::Compute(
+        assert_eq!("1110111111001000", assemble(&Instruction::Compute(
             ComputeFields {
                 compute_op: ComputeOp::One,
                 destination_op: DestOp::M,
