@@ -50,7 +50,6 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
         let mut first_pass: Vec<assembler::Instruction> = vec![];
         let mut label_table = std::collections::HashMap::new();
         for instruction in instructions {
-            println!("{}", assembler::assemble(&instruction));
             match instruction {
                 assembler::Instruction::Address(_) => first_pass.push(instruction),
                 assembler::Instruction::LabeledAddress(_) => first_pass.push(instruction),
@@ -63,7 +62,6 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
         output_path.set_extension("hack");
         let mut output_file = io::BufWriter::new(fs::File::create(output_path)?);
         let mut varible_symbol_slot = 16..;
-        println!("Second pass");
         for instruction in first_pass {
             let assemble = match instruction {
                 assembler::Instruction::LabeledAddress(name) => {
@@ -78,7 +76,6 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
                 }
                 _ => assembler::assemble(&instruction)
             };
-            println!("{}", assemble);
             writeln!(&mut output_file, "{}", assemble)?;
         }
     }
@@ -90,11 +87,8 @@ fn parse_file(path: PathBuf) -> io::Result<Vec<assembler::Instruction>> {
     let file = fs::File::open(path)?;
     for line in io::BufReader::new(file).lines() {
         let line = line?;
-        println!("{}", line);
         let instruction = assembler::parse(&line).unwrap();
-        println!("{:?}", instruction);
         instructions.push(instruction);
-        println!("---")
     }
     Ok(instructions)
 }
