@@ -1,5 +1,4 @@
-mod gol;
-use gol::*;
+use gol_rs::gol::*;
 fn main() {
     let game = GameOfLife::new();
     render(&game);
