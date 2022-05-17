@@ -28,17 +28,53 @@ mod tests {
 
     #[test]
     fn it_revives_from_three_cells() {
-        let mut game = GameOfLife::from_str(
-            "#\n\
-             #\n\
-             #\n\
-             #").unwrap();
+        let mut game = GameOfLife::from_str(r#"
+        #
+        #
+          #
+        "#).unwrap();
         game.advance();
-        let expected = GameOfLife::from_str(
-        "\n\
-         \n\
-        ##\n\
-        \n").unwrap();
+        let expected = GameOfLife::from_str(r#"
+
+         #
+
+        "#).unwrap();
+        assert_eq!(expected.screen, game.screen);
+    }
+
+    #[test]
+    fn it_survives() {
+        let mut game = GameOfLife::from_str(r#"
+            #
+             #
+             #
+        "#
+        ).unwrap();
+        game.advance();
+        let expected = GameOfLife::from_str(r#"
+
+            ##
+
+        "#
+        ).unwrap();
+        assert_eq!(expected.screen, game.screen);
+    }
+
+    #[test]
+    fn it_dies_from_overpop() {
+        let mut game = GameOfLife::from_str(r#"
+            # #
+            ##
+             ##
+        "#
+        ).unwrap();
+        game.advance();
+        let expected = GameOfLife::from_str(r#"
+            #
+            #
+            ###
+        "#
+        ).unwrap();
         assert_eq!(expected.screen, game.screen);
     }
 }
