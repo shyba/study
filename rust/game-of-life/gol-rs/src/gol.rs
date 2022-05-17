@@ -15,13 +15,11 @@ impl FromStr for GameOfLife {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut game = GameOfLife::new();
-        for idxr in 0..ROWS {
-            for idxc in 0..COLUMNS {
-                let index = idxc*COLUMNS + idxr;
-                match s.chars().nth(index as usize) {
-                    Some(c) if c == '#' => game.screen.set(index, true),
-                    Some(_) => game.screen.set(index, false),
-                    None => ()
+        for (idxr, line) in s.lines().enumerate() {
+            for (idxc, c) in line.chars().enumerate() {
+                match c {
+                    '#' => game.screen.set(idxr*ROWS + idxc, true),
+                    _ => ()
                 }
             }
         }
@@ -33,5 +31,19 @@ impl FromStr for GameOfLife {
 impl GameOfLife {
     pub fn new() -> GameOfLife {
         GameOfLife {screen: bv::bitarr!(u8, bv::Msb0; 0; COLUMNS*ROWS)}
+    }
+
+    pub fn get_at(self, row: usize, col: usize) -> Option<bool> {
+        let row = row * ROWS;
+        match self.screen.get(row + col) {
+            Some(x) if *x => Some(true),
+            Some(_) => Some(false),
+            None => None
+        }
+    }
+
+    pub fn advance(self: &mut Self) {
+        let tmp = GameOfLife::new();
+        self.screen = tmp.screen;
     }
 }
