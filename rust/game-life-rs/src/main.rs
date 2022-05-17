@@ -1,11 +1,5 @@
-use bitvec::prelude as bv;
-
-const COLUMNS: usize = 64;
-const ROWS: usize = 20;
-pub struct GameOfLife {
-    screen: bv::BitArr!(for COLUMNS*ROWS, in u8, bv::Msb0)
-}
-
+mod gol;
+use gol::*;
 fn main() {
     let game = GameOfLife::new();
     render(&game);
@@ -26,10 +20,4 @@ fn render(game: &GameOfLife) {
         println!("|");
     }
     println!("{}", "-".repeat(COLUMNS+2));
-}
-
-impl GameOfLife {
-    pub fn new() -> GameOfLife {
-        GameOfLife {screen: bv::bitarr!(u8, bv::Msb0; 0; COLUMNS*ROWS)}
-    }
 }
