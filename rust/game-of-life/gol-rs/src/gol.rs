@@ -1,11 +1,11 @@
 use bitvec::prelude as bv;
-use core::str::FromStr;
 use core::cmp::min;
+use core::str::FromStr;
 
 pub const COLUMNS: usize = 64;
 pub const ROWS: usize = 20;
 pub struct GameOfLife {
-    pub screen: bv::BitArr!(for COLUMNS*ROWS, in u8, bv::Msb0)
+    pub screen: bv::BitArr!(for COLUMNS*ROWS, in u8, bv::Msb0),
 }
 
 #[derive(Debug)]
@@ -19,19 +19,20 @@ impl FromStr for GameOfLife {
         for (idxr, line) in s.lines().enumerate() {
             for (idxc, c) in line.chars().enumerate() {
                 match c {
-                    '#' => game.screen.set(idxr*ROWS + idxc, true),
-                    _ => ()
+                    '#' => game.screen.set(idxr * ROWS + idxc, true),
+                    _ => (),
                 }
             }
         }
         Ok(game)
     }
-
 }
 
 impl GameOfLife {
     pub fn new() -> GameOfLife {
-        GameOfLife {screen: bv::bitarr!(u8, bv::Msb0; 0; COLUMNS*ROWS)}
+        GameOfLife {
+            screen: bv::bitarr!(u8, bv::Msb0; 0; COLUMNS*ROWS),
+        }
     }
 
     pub fn get_at(self: &Self, row: usize, col: usize) -> Option<bool> {
@@ -39,7 +40,7 @@ impl GameOfLife {
         match self.screen.get(row + col) {
             Some(x) if *x => Some(true),
             Some(_) => Some(false),
-            None => None
+            None => None,
         }
     }
 
@@ -57,18 +58,18 @@ impl GameOfLife {
 
     pub fn count_alive_neighbors(self: &Self, row: usize, col: usize) -> usize {
         let min_row = row.checked_sub(1).unwrap_or(0);
-        let max_row = min(ROWS-1, row+1);
+        let max_row = min(ROWS - 1, row + 1);
         let min_col = col.checked_sub(1).unwrap_or(0);
-        let max_col = min(COLUMNS-1, col+1);
+        let max_col = min(COLUMNS - 1, col + 1);
         let mut alive = 0;
         for idxr in min_row..=max_row {
             for idxc in min_col..=max_col {
                 if idxc == col && idxr == row {
-                    continue
+                    continue;
                 }
                 alive = match self.get_at(idxr, idxc) {
                     Some(true) => alive + 1,
-                    _ => alive
+                    _ => alive,
                 };
             }
         }
@@ -95,7 +96,9 @@ mod tests {
         let game = GameOfLife::from_str(
             "### #\n\
              #\n\
-             #").unwrap();
+             #",
+        )
+        .unwrap();
         assert_eq!(true, game.screen.get(0..3).unwrap().all());
         assert_eq!(false, game.screen.get(0..4).unwrap().all());
         assert_eq!(true, game.screen.get(4).unwrap());
@@ -113,53 +116,67 @@ mod tests {
 
     #[test]
     fn it_revives_from_three_cells() {
-        let mut game = GameOfLife::from_str(r#"
+        let mut game = GameOfLife::from_str(
+            r#"
         #
         #
           #
-        "#).unwrap();
+        "#,
+        )
+        .unwrap();
         game.advance();
-        let expected = GameOfLife::from_str(r#"
+        let expected = GameOfLife::from_str(
+            r#"
 
          #
 
-        "#).unwrap();
+        "#,
+        )
+        .unwrap();
         assert_eq!(expected.screen, game.screen);
     }
 
     #[test]
     fn it_survives() {
-        let mut game = GameOfLife::from_str(r#"
+        let mut game = GameOfLife::from_str(
+            r#"
             #
              #
              #
-        "#
-        ).unwrap();
+        "#,
+        )
+        .unwrap();
         game.advance();
-        let expected = GameOfLife::from_str(r#"
+        let expected = GameOfLife::from_str(
+            r#"
 
             ##
 
-        "#
-        ).unwrap();
+        "#,
+        )
+        .unwrap();
         assert_eq!(expected.screen, game.screen);
     }
 
     #[test]
     fn it_dies_from_overpop() {
-        let mut game = GameOfLife::from_str(r#"
+        let mut game = GameOfLife::from_str(
+            r#"
             # #
             ##
              ##
-        "#
-        ).unwrap();
+        "#,
+        )
+        .unwrap();
         game.advance();
-        let expected = GameOfLife::from_str(r#"
+        let expected = GameOfLife::from_str(
+            r#"
             #
             #
             ###
-        "#
-        ).unwrap();
+        "#,
+        )
+        .unwrap();
         assert_eq!(expected.screen, game.screen);
     }
     #[test]
