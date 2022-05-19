@@ -8,3 +8,7 @@ edition = "2021"
 [dependencies.gol-rs]
 version = "0.1.0"
 path = "../gol-rs"
+
+[dependencies]
+tui = "0.18"
+crossterm = "0.23"
