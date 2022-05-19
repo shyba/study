@@ -1,18 +1,35 @@
 use gol_rs::gol::*;
+use std::str::FromStr;
+use std::thread::sleep;
+use std::time::Duration;
+
 fn main() {
-    let game = GameOfLife::new();
-    render(&game);
+    let mut game = GameOfLife::from_str(
+        r#"#
+
+
+                #
+               ###
+                #"#).unwrap();
+    loop {
+        render(&game);
+        game.advance();
+        sleep(Duration::from_secs_f32(0.1));
+    }
 }
 
 fn render(game: &GameOfLife) {
+    dbg!(game.screen.count_ones());
+    dbg!(game.screen.count_zeros());
     println!("{}", "-".repeat(COLUMNS+2));
     for idxr in 0..ROWS {
         print!("|");
         for idxc in 0..COLUMNS {
             let index = idxr*COLUMNS + idxc;
-            match game.screen.get(index).as_deref() {
+            let value = game.screen.get(index);
+            match value.as_deref() {
                 Some(true) => print!("#"),
-                Some(false) => print!(" "),
+                Some(false) => print!("-"),
                 None => println!("ERROR AT {}", index)
             }
         }
