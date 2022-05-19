@@ -19,7 +19,7 @@ impl FromStr for GameOfLife {
         for (idxr, line) in s.lines().enumerate() {
             for (idxc, c) in line.chars().enumerate() {
                 match c {
-                    '#' => game.screen.set(idxr * ROWS + idxc, true),
+                    '#' => game.screen.set(idxr * COLUMNS + idxc, true),
                     _ => (),
                 }
             }
@@ -36,7 +36,7 @@ impl GameOfLife {
     }
 
     pub fn get_at(self: &Self, row: usize, col: usize) -> Option<bool> {
-        let row = row * ROWS;
+        let row = row * COLUMNS;
         match self.screen.get(row + col) {
             Some(x) if *x => Some(true),
             Some(_) => Some(false),
@@ -49,7 +49,7 @@ impl GameOfLife {
         tmp.screen = self.screen.clone();
         for idxr in 0..ROWS {
             for idxc in 0..COLUMNS {
-                let index = idxr * ROWS + idxc;
+                let index = idxr * COLUMNS + idxc;
                 let new_state = tmp.next_state_at(idxr, idxc);
                 self.screen.set(index, new_state);
             }
