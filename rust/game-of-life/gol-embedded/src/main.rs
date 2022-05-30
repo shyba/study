@@ -93,16 +93,18 @@ fn main() -> ! {
 
                 
         "#).unwrap();
-    for idr in 0..64 {
-        for idc in 0..128 {
-            let index = idr*COLUMNS + idc;
-            game.screen.set(index, rosc.get_random_bit());
-        }
-    }
+    reset_random(&mut game, &rosc);
+    let mut count = 0;
 
     
 
     loop {
+        if count > 100 {
+            reset_random(&mut game, &rosc);
+            count = 0;
+        }
+        count += 1;
+
         display.clear();
         for idr in 0..64 {
             for idc in 0..128 {
@@ -120,4 +122,13 @@ fn main() -> ! {
         //delay.delay_ms(500);
     }
 
+}
+
+fn reset_random(game: &mut GameOfLife, rosc: &hal::rosc::RingOscillator<hal::rosc::Enabled>) {
+    for idr in 0..64 {
+        for idc in 0..128 {
+            let index = idr*COLUMNS + idc;
+            game.screen.set(index, rosc.get_random_bit());
+        }
+    }
 }
