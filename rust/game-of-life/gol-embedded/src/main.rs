@@ -98,11 +98,10 @@ fn main() -> ! {
     let mut count = 0;
 
     loop {
-        if count > 100 {
+        if count > 10 {
             reset_random(&mut game, &rosc);
             count = 0;
         }
-        count += 1;
 
         display.clear();
         for idr in 0..64 {
@@ -119,7 +118,9 @@ fn main() -> ! {
             }
         }
         display.flush().unwrap();
-        game.advance();
+        if game.advance() < 100 {
+            count += 1;
+        }
         //delay.delay_ms(500);
     }
 }

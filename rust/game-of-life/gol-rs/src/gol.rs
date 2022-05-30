@@ -44,16 +44,23 @@ impl GameOfLife {
         }
     }
 
-    pub fn advance(self: &mut Self) {
+    pub fn advance(self: &mut Self) -> usize {
+        let mut changes = 0;
         let mut tmp = GameOfLife::new();
         tmp.screen = self.screen.clone();
         for idxr in 0..ROWS {
             for idxc in 0..COLUMNS {
                 let index = idxr * COLUMNS + idxc;
                 let new_state = tmp.next_state_at(idxr, idxc);
+                let old_state = self.get_at(idxr, idxc).unwrap_or(false);
+                changes += match (old_state != new_state) {
+                    true => 1,
+                    _ => 0
+                };
                 self.screen.set(index, new_state);
             }
         }
+        changes
     }
 
     pub fn count_alive_neighbors(self: &Self, row: usize, col: usize) -> usize {
