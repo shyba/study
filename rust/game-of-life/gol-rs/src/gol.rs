@@ -2,8 +2,8 @@ use bitvec::prelude as bv;
 use core::cmp::min;
 use core::str::FromStr;
 
-pub const COLUMNS: usize = 64;
-pub const ROWS: usize = 20;
+pub const COLUMNS: usize = 128;
+pub const ROWS: usize = 64;
 pub struct GameOfLife {
     pub screen: bv::BitArr!(for COLUMNS*ROWS, in u8, bv::Msb0),
 }
