@@ -4,12 +4,12 @@
 use cortex_m_rt::entry;
 use embedded_time::rate::*;
 use panic_halt as _;
-use rp_pico::hal::prelude::*;
-use rp_pico::hal::pac;
 use rp_pico::hal;
+use rp_pico::hal::pac;
+use rp_pico::hal::prelude::*;
 
-use gol_rs::gol::*;
 use core::str::FromStr;
+use gol_rs::gol::*;
 
 use embedded_graphics::{pixelcolor::BinaryColor, prelude::*};
 use ssd1306::{prelude::*, Ssd1306};
@@ -39,7 +39,6 @@ fn main() -> ! {
 
     let core = pac::CorePeripherals::take().unwrap();
     let mut delay = cortex_m::delay::Delay::new(core.SYST, clocks.system_clock.freq().integer());
-
 
     // The single-cycle I/O block controls our GPIO pins
     let sio = hal::Sio::new(pac.SIO);
@@ -92,11 +91,11 @@ fn main() -> ! {
                                           ##    ##    ###
 
                 
-        "#).unwrap();
+        "#,
+    )
+    .unwrap();
     reset_random(&mut game, &rosc);
     let mut count = 0;
-
-    
 
     loop {
         if count > 100 {
@@ -108,26 +107,27 @@ fn main() -> ! {
         display.clear();
         for idr in 0..64 {
             for idc in 0..128 {
-                let index = idr*COLUMNS + idc;
+                let index = idr * COLUMNS + idc;
                 let value = game.screen.get(index);
                 let color = match value.as_deref() {
                     Some(true) => BinaryColor::On,
-                    _ => BinaryColor::Off
+                    _ => BinaryColor::Off,
                 };
-                Pixel(Point::new(idc as i32, idr as i32), color).draw(&mut display).unwrap();
+                Pixel(Point::new(idc as i32, idr as i32), color)
+                    .draw(&mut display)
+                    .unwrap();
             }
         }
         display.flush().unwrap();
         game.advance();
         //delay.delay_ms(500);
     }
-
 }
 
 fn reset_random(game: &mut GameOfLife, rosc: &hal::rosc::RingOscillator<hal::rosc::Enabled>) {
     for idr in 0..64 {
         for idc in 0..128 {
-            let index = idr*COLUMNS + idc;
+            let index = idr * COLUMNS + idc;
             game.screen.set(index, rosc.get_random_bit());
         }
     }
