@@ -8,8 +8,8 @@
     "./server.js": false
   },
   "dependencies": {
-    "bittorrent-tracker": "^9.18.6",
-    "webtorrent": "^1.8.20"
+    "bittorrent-tracker": "^9.19.0",
+    "webtorrent": "^1.8.26"
   },
   "devDependencies": {
     "browserify": "^17.0.0",
