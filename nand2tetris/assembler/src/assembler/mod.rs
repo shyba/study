@@ -60,9 +60,9 @@ pub enum DestOp {
 
 #[derive(Debug, PartialEq)]
 pub struct ComputeFields {
-    compute_op: ComputeOp,
-    jump_op: JumpOp,
-    destination_op: DestOp,
+    pub compute_op: ComputeOp,
+    pub jump_op: JumpOp,
+    pub destination_op: DestOp,
 }
 
 impl FromStr for ComputeOp {
