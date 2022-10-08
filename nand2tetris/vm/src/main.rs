@@ -1,6 +1,6 @@
 use std::fmt::format;
 
-use assembler::assembler::{Instruction, ComputeFields, ComputeOp, DestOp, JumpOp};
+use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
 pub enum Segment {
     Local,
@@ -9,7 +9,7 @@ pub enum Segment {
     This,
     That,
     Pointer,
-    Temp
+    Temp,
 }
 
 pub enum Command {
@@ -23,7 +23,7 @@ pub enum Command {
     Lt,
     And,
     Or,
-    Not
+    Not,
 }
 
 pub enum Address {
@@ -43,16 +43,19 @@ pub enum Address {
     R13,
     R14,
     R15,
-    Symbol(u8)
+    Symbol(u8),
 }
 
 fn gen_load(addr: u16) -> Vec<Instruction> {
-    let mut result = vec!();
+    let mut result = vec![];
     result.push(Instruction::Address(addr));
-    result.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::A(true), jump_op: JumpOp::Nothing, destination_op: DestOp::D}));
+    result.push(Instruction::Compute(ComputeFields {
+        compute_op: ComputeOp::A(true),
+        jump_op: JumpOp::Nothing,
+        destination_op: DestOp::D,
+    }));
     result
 }
-
 
 // move this to assembler crate?
 fn generate_instruction(ins: Instruction) -> String {
@@ -62,39 +65,39 @@ fn generate_instruction(ins: Instruction) -> String {
         Instruction::Comment(content) => format!("//{}", content),
         Instruction::Compute(fields) => generate_compute_instruction(fields),
         Instruction::Label(label) => format!("{}:", label),
-        Instruction::Nothing => String::new()
+        Instruction::Nothing => String::new(),
     }
 }
 
 fn generate_compute_instruction(fields: ComputeFields) -> String {
     let mut result = String::new();
     result.push_str(match fields.compute_op {
-        ComputeOp::Zero =>  "0",
-        ComputeOp::One =>  "1",
-        ComputeOp::MinusOne =>  "-1",
-        ComputeOp::D =>  "D",
-        ComputeOp::A(true) =>  "M",
-        ComputeOp::A(false) =>  "A",
-        ComputeOp::NotD =>  "!D",
-        ComputeOp::NotA(true) =>  "!M",
-        ComputeOp::NotA(false) =>  "!A",
-        ComputeOp::MinusD =>  "-D",
-        ComputeOp::MinusA(true) =>  "-M",
-        ComputeOp::MinusA(false) =>  "-A",
-        ComputeOp::IncD =>  "D+1",
-        ComputeOp::IncA(true) =>  "M+1",
-        ComputeOp::IncA(false) =>  "A+1",
-        ComputeOp::DecD =>  "D-1",
-        ComputeOp::DecA(true) =>  "M-1",
-        ComputeOp::DecA(false) =>  "A-1",
-        ComputeOp::DPlusA(true) =>  "D+M",
-        ComputeOp::DPlusA(false) =>  "D+A",
-        ComputeOp::DMinusA(true) =>  "D-M",
-        ComputeOp::DMinusA(false) =>  "D-A",
-        ComputeOp::AMinusD(true) =>  "M-D",
-        ComputeOp::AMinusD(false) =>  "A-D",
-        ComputeOp::DAndA(true) =>  "D&M",
-        ComputeOp::DAndA(false) =>  "D&A",
+        ComputeOp::Zero => "0",
+        ComputeOp::One => "1",
+        ComputeOp::MinusOne => "-1",
+        ComputeOp::D => "D",
+        ComputeOp::A(true) => "M",
+        ComputeOp::A(false) => "A",
+        ComputeOp::NotD => "!D",
+        ComputeOp::NotA(true) => "!M",
+        ComputeOp::NotA(false) => "!A",
+        ComputeOp::MinusD => "-D",
+        ComputeOp::MinusA(true) => "-M",
+        ComputeOp::MinusA(false) => "-A",
+        ComputeOp::IncD => "D+1",
+        ComputeOp::IncA(true) => "M+1",
+        ComputeOp::IncA(false) => "A+1",
+        ComputeOp::DecD => "D-1",
+        ComputeOp::DecA(true) => "M-1",
+        ComputeOp::DecA(false) => "A-1",
+        ComputeOp::DPlusA(true) => "D+M",
+        ComputeOp::DPlusA(false) => "D+A",
+        ComputeOp::DMinusA(true) => "D-M",
+        ComputeOp::DMinusA(false) => "D-A",
+        ComputeOp::AMinusD(true) => "M-D",
+        ComputeOp::AMinusD(false) => "A-D",
+        ComputeOp::DAndA(true) => "D&M",
+        ComputeOp::DAndA(false) => "D&A",
         ComputeOp::DOrA(true) => "D|M",
         ComputeOp::DOrA(false) => "D|A",
     });
@@ -106,10 +109,10 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
         DestOp::AM => "AM",
         DestOp::AD => "AD",
         DestOp::ADM => "ADM",
-        DestOp::Nothing => ""
+        DestOp::Nothing => "",
     });
     if fields.jump_op == JumpOp::Nothing {
-        return result
+        return result;
     } else if result.len() > 0 {
         result.push(';');
     }
@@ -121,21 +124,30 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
         JumpOp::NotEqual => "JNE",
         JumpOp::LessEqual => "JLE",
         JumpOp::Unconditional => "JMP",
-        JumpOp::Nothing => ""
+        JumpOp::Nothing => "",
     });
     result
 }
 
-fn main() {
-
-}
+fn main() {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-   #[test]
-   fn generate_load_instructions() {
-       assert_eq!(vec!(Instruction::Address(16), Instruction::Compute(ComputeFields { compute_op: ComputeOp::A(true), jump_op: JumpOp::Nothing, destination_op: DestOp::D})), gen_load(16));
-   }
+    #[test]
+    fn generate_load_instructions() {
+        // load 16 to A register
+        assert_eq!(
+            vec!(
+                Instruction::Address(16),
+                Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::A(true),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::D
+                })
+            ),
+            gen_load(16)
+        );
+    }
 }
