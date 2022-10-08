@@ -136,6 +136,6 @@ mod tests {
 
    #[test]
    fn generate_load_instructions() {
-       assert_eq!(vec!(Instruction::Address(16)), gen_load(16));
+       assert_eq!(vec!(Instruction::Address(16), Instruction::Compute(ComputeFields { compute_op: ComputeOp::A(true), jump_op: JumpOp::Nothing, destination_op: DestOp::D})), gen_load(16));
    }
 }
