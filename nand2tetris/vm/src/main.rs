@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
+#[derive(Debug)]
 pub enum Segment {
     Local,
     Static,
@@ -15,6 +16,7 @@ pub enum Segment {
     Temp,
 }
 
+#[derive(Debug)]
 pub enum Arithmetic {
     Add,
     Sub,
@@ -27,6 +29,7 @@ pub enum Arithmetic {
     Not,
 }
 
+#[derive(Debug)]
 pub enum VMInstruction {
     Comment(String),
     Push(Segment, u16),
@@ -68,6 +71,17 @@ fn parse_push(line: String) -> VMInstruction {
     VMInstruction::Push(
         parse_segment(words[1]),
         u16::from_str_radix(words[2], 10).expect("Error parsing push index"),
+    )
+}
+
+fn parse_pop(line: String) -> VMInstruction {
+    let words: Vec<&str> = line.split(" ").collect();
+    if words.len() != 3 {
+        panic!("Error parsing pop. Expected: pop <segment> <value>")
+    }
+    VMInstruction::Pop(
+        parse_segment(words[1]),
+        u16::from_str_radix(words[2], 10).expect("Error parsing pop index"),
     )
 }
 
@@ -182,6 +196,8 @@ impl Parser {
             VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
+        } else if lower_line.starts_with("pop") {
+            parse_pop(line.to_lowercase())
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -208,6 +224,7 @@ fn process_file(file_path: PathBuf) {
     let mut parser = Parser::new();
     for line in std::io::BufReader::new(file).lines() {
         let parsed_line = parser.parse_line(&line.expect("IO error reading line."));
+        dbg!(parsed_line);
     }
 }
 
