@@ -1,4 +1,6 @@
-use std::fmt::format;
+use std::fs;
+use std::fs::ReadDir;
+use std::path::{Path, PathBuf};
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
@@ -129,7 +131,83 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
     result
 }
 
-fn main() {}
+fn main() {
+    if std::env::args().len() > 1 {
+        for argument in std::env::args() {
+            for file_path in ValidFiles::new(Some(&argument)) {
+                process_file(file_path);
+            }
+        }
+    } else {
+        for file_path in ValidFiles::new(None) {
+            process_file(file_path);
+        }
+    }
+}
+
+fn process_file(file_path: PathBuf) {
+    dbg!(file_path);
+}
+
+enum ValidFiles<'a> {
+    File(&'a Path),
+    Directory(Option<ReadDir>),
+    Done,
+}
+
+impl<'a> ValidFiles<'a> {
+    pub fn new(dir: Option<&'a String>) -> Self {
+        let path = match dir {
+            Some(value) => Path::new(value),
+            None => Path::new("."),
+        };
+        match path.is_file() {
+            true => Self::File(&path),
+            false => Self::Directory(Some(fs::read_dir(path).unwrap())),
+        }
+    }
+}
+
+impl Iterator for ValidFiles<'_> {
+    type Item = PathBuf;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self {
+            Self::File(path) => {
+                let current = path.clone().to_path_buf();
+                *self = Self::Done;
+                Some(current)
+            }
+            Self::Done => None,
+            Self::Directory(read_dir) => {
+                while read_dir.is_some() {
+                    match read_dir {
+                        Some(entry) => match entry.next() {
+                            Some(next_entry) => {
+                                let path = next_entry.unwrap().path();
+                                let valid_name = path
+                                    .file_name()
+                                    .and_then(|value| value.to_string_lossy().chars().next())
+                                    .map_or(false, char::is_uppercase);
+                                let valid_extension = path.extension().map_or(false, |extension| {
+                                    extension.to_string_lossy().eq("vm")
+                                });
+                                if path.is_dir() || !valid_name || !valid_extension {
+                                    continue;
+                                }
+                                return Some(path);
+                            }
+                            None => break,
+                        },
+                        None => break,
+                    }
+                }
+                *self = Self::Done;
+                None
+            }
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
