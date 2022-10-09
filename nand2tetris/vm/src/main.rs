@@ -1,6 +1,7 @@
 use std::fs;
 use std::fs::ReadDir;
 use std::path::{Path, PathBuf};
+use std::io::BufRead;
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
@@ -131,6 +132,21 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
     result
 }
 
+enum VMInstruction {
+    Comment
+}
+struct Parser {
+    line_number: u16
+}
+
+impl Parser {
+    pub fn new() -> Self { Self {line_number: 0} }
+    pub fn parse_line(&mut self, line: &String) -> VMInstruction {
+        self.line_number += 1;
+        VMInstruction::Comment
+    }
+}
+
 fn main() {
     if std::env::args().len() > 1 {
         for argument in std::env::args().skip(1) {
@@ -146,7 +162,13 @@ fn main() {
 }
 
 fn process_file(file_path: PathBuf) {
-    dbg!(file_path);
+    println!("Processing file: {:?}", file_path);
+    return;
+    let file = std::fs::File::open(file_path).expect("Error opening file");
+    let mut parser = Parser::new();
+    for line in std::io::BufReader::new(file).lines() {
+        let parsed_line = parser.parse_line(&line.expect("IO error reading line."));
+    }
 }
 
 enum ValidFiles<'a> {
