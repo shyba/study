@@ -34,7 +34,7 @@ pub enum VMInstruction {
     Comment(String),
     Push(Segment, u16),
     Pop(Segment, u16),
-    Arithmetic,
+    Arithmetic(Arithmetic),
     Label(String),
     Goto, //?
     Branch,
@@ -61,6 +61,21 @@ pub enum Address {
     R14,
     R15,
     Symbol(u8),
+}
+
+fn try_parse_arithmetic(line: &String) -> Option<VMInstruction> {
+    match line.trim().to_lowercase().as_str() {
+        "add" => Some(VMInstruction::Arithmetic(Arithmetic::Add)),
+        "sub" => Some(VMInstruction::Arithmetic(Arithmetic::Sub)),
+        "neg" => Some(VMInstruction::Arithmetic(Arithmetic::Neg)),
+        "eq" => Some(VMInstruction::Arithmetic(Arithmetic::Eq)),
+        "gt" => Some(VMInstruction::Arithmetic(Arithmetic::Gt)),
+        "lt" => Some(VMInstruction::Arithmetic(Arithmetic::Lt)),
+        "and" => Some(VMInstruction::Arithmetic(Arithmetic::And)),
+        "or" => Some(VMInstruction::Arithmetic(Arithmetic::Or)),
+        "not" => Some(VMInstruction::Arithmetic(Arithmetic::Not)),
+        _ => None,
+    }
 }
 
 fn parse_push(line: String) -> VMInstruction {
@@ -190,12 +205,14 @@ impl Parser {
     }
     pub fn parse_line(&mut self, line: &String) -> VMInstruction {
         self.line_number += 1;
-        let lower_line = line.to_lowercase();
+        let lower_line = line.trim().to_lowercase();
 
         if line.contains("//") {
             VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
+        } else if try_parse_arithmetic(line).is_some() {
+            try_parse_arithmetic(line).unwrap()
         } else if lower_line.starts_with("pop") {
             parse_pop(line.to_lowercase())
         } else {
