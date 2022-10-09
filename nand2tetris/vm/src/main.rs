@@ -1,23 +1,21 @@
 use std::fs;
 use std::fs::ReadDir;
-use std::path::{Path, PathBuf};
 use std::io::BufRead;
+use std::path::{Path, PathBuf};
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
 pub enum Segment {
     Local,
     Static,
-    Constant(i16),
+    Constant,
     This,
     That,
     Pointer,
     Temp,
 }
 
-pub enum Command {
-    Push(Segment),
-    Pop(Segment),
+pub enum Arithmetic {
     Add,
     Sub,
     Neg,
@@ -27,6 +25,19 @@ pub enum Command {
     And,
     Or,
     Not,
+}
+
+pub enum VMInstruction {
+    Comment(String),
+    Push(Segment, u16),
+    Pop(Segment, u16),
+    Arithmetic,
+    Label(String),
+    Goto, //?
+    Branch,
+    Function,
+    Return,
+    Call,
 }
 
 pub enum Address {
@@ -47,6 +58,29 @@ pub enum Address {
     R14,
     R15,
     Symbol(u8),
+}
+
+fn parse_push(line: String) -> VMInstruction {
+    let words: Vec<&str> = line.split(" ").collect();
+    if words.len() != 3 {
+        panic!("Error parsing push. Expected: push <segment> <value>")
+    }
+    VMInstruction::Push(
+        parse_segment(words[1]),
+        u16::from_str_radix(words[2], 10).expect("Error parsing push index"),
+    )
+}
+
+fn parse_segment(segment: &str) -> Segment {
+    match segment {
+        "local" => Segment::Local,
+        "static" => Segment::Static,
+        "this" => Segment::This,
+        "that" => Segment::That,
+        "temp" => Segment::Temp, // double check
+        "constant" => Segment::Constant,
+        unexpected => panic!("Unexpected segment: {}", unexpected),
+    }
 }
 
 fn gen_load(addr: u16) -> Vec<Instruction> {
@@ -132,18 +166,25 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
     result
 }
 
-enum VMInstruction {
-    Comment
-}
 struct Parser {
-    line_number: u16
+    line_number: u16,
 }
 
 impl Parser {
-    pub fn new() -> Self { Self {line_number: 0} }
+    pub fn new() -> Self {
+        Self { line_number: 0 }
+    }
     pub fn parse_line(&mut self, line: &String) -> VMInstruction {
         self.line_number += 1;
-        VMInstruction::Comment
+        let lower_line = line.to_lowercase();
+
+        if line.contains("//") {
+            VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
+        } else if lower_line.starts_with("push") {
+            parse_push(line.to_lowercase())
+        } else {
+            panic!("Unexpected instruction: {}", line)
+        }
     }
 }
 
@@ -163,7 +204,6 @@ fn main() {
 
 fn process_file(file_path: PathBuf) {
     println!("Processing file: {:?}", file_path);
-    return;
     let file = std::fs::File::open(file_path).expect("Error opening file");
     let mut parser = Parser::new();
     for line in std::io::BufReader::new(file).lines() {
