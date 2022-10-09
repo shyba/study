@@ -133,7 +133,7 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
 
 fn main() {
     if std::env::args().len() > 1 {
-        for argument in std::env::args() {
+        for argument in std::env::args().skip(1) {
             for file_path in ValidFiles::new(Some(&argument)) {
                 process_file(file_path);
             }
