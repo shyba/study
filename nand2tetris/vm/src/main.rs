@@ -112,17 +112,6 @@ fn parse_segment(segment: &str) -> Segment {
     }
 }
 
-fn gen_load(addr: u16) -> Vec<Instruction> {
-    let mut result = vec![];
-    result.push(Instruction::Address(addr));
-    result.push(Instruction::Compute(ComputeFields {
-        compute_op: ComputeOp::A(true),
-        jump_op: JumpOp::Nothing,
-        destination_op: DestOp::D,
-    }));
-    result
-}
-
 // move this to assembler crate?
 fn generate_instruction(ins: Instruction) -> String {
     match ins {
@@ -193,6 +182,54 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
         JumpOp::Nothing => "",
     });
     result
+}
+
+struct CodeGenerator {
+    static_variables: u16,
+    program_name: String
+}
+
+impl CodeGenerator {
+
+    pub fn translate(vm_instruction: &VMInstruction) -> Vec<Instruction> {
+        let mut instructions = vec![];
+        match &vm_instruction {
+            VMInstruction::Push(segment, value) => {},
+            _ => ()
+        }
+        instructions
+    }
+
+    fn segment_to_address_instruction(&mut self, segment: &Segment, offset: u16) -> Instruction {
+        match segment {
+            Segment::Constant => Instruction::Address(offset),
+            Segment::Temp => Instruction::Address(5 + offset),
+            Segment::Static => {
+                self.static_variables += 1;
+                Instruction::LabeledAddress(self.program_name.clone() + self.static_variables.to_string().as_str())
+            },
+            Segment::Pointer => match offset {
+                0 => Instruction::LabeledAddress("THIS".to_owned()),
+                1 => Instruction::LabeledAddress("THAT".to_owned()),
+                _ => panic!("pointer with a value that is not 1/0 is illegal")
+            },
+            Segment::Local => Instruction::Address(1 + offset),
+            Segment::This => Instruction::Address(3 + offset),
+            Segment::That => Instruction::Address(4 + offset)
+        }
+    }
+
+    fn load(addr: u16) -> Vec<Instruction> {
+        let mut result = vec![];
+        result.push(Instruction::Address(addr));
+        result.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::A(true),
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::D,
+        }));
+        result
+    }
+
 }
 
 struct Parser {
@@ -321,7 +358,7 @@ mod tests {
                     destination_op: DestOp::D
                 })
             ),
-            gen_load(16)
+            CodeGenerator::load(16)
         );
     }
 }
