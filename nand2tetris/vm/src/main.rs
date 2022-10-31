@@ -205,6 +205,22 @@ impl CodeGenerator {
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.extend(self.gen_push_from_d()) // push D
                     }
+                    Segment::Pointer => {
+                        instructions.extend(vec![
+                            match value {
+                                0 => Instruction::Address(3), // this
+                                1 => Instruction::Address(4),  // that
+                                _ => panic!("pointer can only be used with 1 and 0")
+                            },
+                            Instruction::Compute(ComputeFields {
+                                compute_op: ComputeOp::A(true),
+                                jump_op: JumpOp::Nothing,
+                                destination_op: DestOp::D
+                            })
+                        ]);
+                        instructions.extend(self.gen_push_from_d()) // push D
+
+                    },
                     _ => {
                         // all other cases are loading from memory segments
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
@@ -464,9 +480,9 @@ mod tests {
         assert_instructions(&vec![
             "@13", // 13 offset
             "D=A", // store offset in D
-            "@1", // THIS base addr
+            "@1", // LOCAL base addr
             "A=D+A", // sum offset
-            "D=M",  // read D = RAM[THIS + offset]
+            "D=M",  // read D = RAM[LOCAL + offset]
             "@0", // can we just @SP?
             "AM=M+1", "M=D",
         ], VMInstruction::Push(Segment::Local, 13));
@@ -492,6 +508,28 @@ mod tests {
             "@0",
             "AM=M+1", "M=D",
         ], VMInstruction::Push(Segment::This, 19));
+    }
 
+    #[test]
+    fn generate_push_that_15() {
+        assert_instructions(&vec![
+            "@15", // load offset
+            "D=A", // store offset in D
+            "@4", // THAT base addr
+            "A=D+A", // sum offset
+            "D=M",  // read D = RAM[THAT + offset]
+            "@0",
+            "AM=M+1", "M=D",
+        ], VMInstruction::Push(Segment::That, 15));
+    }
+
+    #[test]
+    fn generate_push_pointer_0() {
+        assert_instructions(&vec![
+            "@3", // THIS base addr
+            "D=M",  // read D = RAM[THIS]
+            "@0",
+            "AM=M+1", "M=D",
+        ], VMInstruction::Push(Segment::Pointer, 0));
     }
 }
