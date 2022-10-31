@@ -185,14 +185,12 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
 }
 
 struct CodeGenerator {
-    static_variables: u16,
     program_name: String,
 }
 
 impl CodeGenerator {
     pub fn new(program_name: String) -> CodeGenerator {
         CodeGenerator {
-            static_variables: 0,
             program_name: program_name,
         }
     }
@@ -236,9 +234,8 @@ impl CodeGenerator {
             Segment::Constant => Instruction::Address(offset),
             Segment::Temp => Instruction::Address(5 + offset),
             Segment::Static => {
-                self.static_variables += 1;
                 Instruction::LabeledAddress(
-                    self.program_name.clone() + self.static_variables.to_string().as_str(),
+                    self.program_name.clone() + "." + &offset.to_string(),
                 )
             },
             Segment::Pointer => match offset {
@@ -438,5 +435,15 @@ mod tests {
             "D=M", "@0", // can we just @SP?
             "AM=M+1", "M=D",
         ], VMInstruction::Push(Segment::Local, 13));
+    }
+
+    #[test]
+    fn generate_push_static_20() {
+        assert_instructions(&vec![
+            "@Test.20", // program name is Test
+            "D=M", "@0",
+            "AM=M+1", "M=D",
+        ], VMInstruction::Push(Segment::Static, 20));
+
     }
 }
