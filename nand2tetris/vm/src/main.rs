@@ -202,24 +202,12 @@ impl CodeGenerator {
                 match segment {
                     Segment::Constant => {
                         // load constant
-                        instructions.push(self.segment_to_address_instruction(segment, *value));
-                        // D=A
-                        instructions.push(Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::A(false),
-                            jump_op: JumpOp::Nothing,
-                            destination_op: DestOp::D,
-                        }));
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.extend(self.gen_push_from_d()) // push D
                     }
                     _ => {
                         // all other cases are loading from memory segments
-                        instructions.push(self.segment_to_address_instruction(segment, *value));
-                        // D=M
-                        instructions.push(Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::A(true),
-                            jump_op: JumpOp::Nothing,
-                            destination_op: DestOp::D,
-                        }));
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.extend(self.gen_push_from_d()) // push D
                     }
                 }
@@ -229,24 +217,66 @@ impl CodeGenerator {
         instructions
     }
 
-    fn segment_to_address_instruction(&mut self, segment: &Segment, offset: u16) -> Instruction {
+    fn segment_to_address_instruction(&mut self, segment: &Segment, offset: u16) -> Vec<Instruction> {
+        let mut instructions = vec![
+            match &segment {
+                Segment::Static => {
+                    Instruction::LabeledAddress(
+                        self.program_name.clone() + "." + &offset.to_string(),
+                    )
+                },
+                _ => Instruction::Address(offset)
+            },
+        ];
         match segment {
-            Segment::Constant => Instruction::Address(offset),
-            Segment::Temp => Instruction::Address(5 + offset),
-            Segment::Static => {
-                Instruction::LabeledAddress(
-                    self.program_name.clone() + "." + &offset.to_string(),
-                )
-            },
-            Segment::Pointer => match offset {
-                0 => Instruction::LabeledAddress("THIS".to_owned()),
-                1 => Instruction::LabeledAddress("THAT".to_owned()),
-                _ => panic!("pointer with a value that is not 1/0 is illegal"),
-            },
-            Segment::Local => Instruction::Address(1 + offset),
-            Segment::This => Instruction::Address(3 + offset),
-            Segment::That => Instruction::Address(4 + offset),
+            Segment::Constant => (),
+            Segment::Static => (),
+            _ => {
+                instructions.push(
+                Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::A(false),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::D
+                })
+                );
+            }
         }
+        match segment {
+            Segment::Local => instructions.push(Instruction::Address(1)),
+            Segment::This => instructions.push(Instruction::Address(3)),
+            Segment::That => instructions.push(Instruction::Address(4)),
+            Segment::Temp => instructions.push(Instruction::Address(5)),
+            _ => ()
+        }
+        match segment {
+            Segment::Constant => {
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::A(false),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::D
+                }));
+            },
+            Segment::Static => {
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::A(true),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::D
+                }));
+            },
+            _ => {
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::DPlusA(false),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::A
+                }));
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::A(true),
+                    jump_op: JumpOp::Nothing,
+                    destination_op: DestOp::D
+                }));
+            }
+        };
+        instructions
     }
 
     fn load(addr: u16) -> Vec<Instruction> {
@@ -413,11 +443,12 @@ mod tests {
     fn assert_instructions(expected: &Vec<&str>, vm_instruction: VMInstruction) {
         let instructions = CodeGenerator::new("Test".to_string())
             .translate(&vm_instruction);
-        assert_eq!(expected.len(), instructions.len());
-        for index in 0..expected.len() {
+        let smallest = expected.len().min(instructions.len());
+        for index in 0..smallest {
             let str_instruction = generate_instruction(&instructions[index]);
             assert_eq!(expected[index], str_instruction);
         }
+        assert_eq!(expected.len(), instructions.len());
     }
 
     #[test]
@@ -431,8 +462,12 @@ mod tests {
     #[test]
     fn generate_push_local_13() {
         assert_instructions(&vec![
-            "@14", // local (1) + 13 offset
-            "D=M", "@0", // can we just @SP?
+            "@13", // 13 offset
+            "D=A", // store offset in D
+            "@1", // THIS base addr
+            "A=D+A", // sum offset
+            "D=M",  // read D = RAM[THIS + offset]
+            "@0", // can we just @SP?
             "AM=M+1", "M=D",
         ], VMInstruction::Push(Segment::Local, 13));
     }
@@ -444,6 +479,19 @@ mod tests {
             "D=M", "@0",
             "AM=M+1", "M=D",
         ], VMInstruction::Push(Segment::Static, 20));
+    }
+
+    #[test]
+    fn generate_push_this_19() {
+        assert_instructions(&vec![
+            "@19", // load offset
+            "D=A", // store offset in D
+            "@3", // THIS base addr
+            "A=D+A", // sum offset
+            "D=M",  // read D = RAM[THIS + offset]
+            "@0",
+            "AM=M+1", "M=D",
+        ], VMInstruction::Push(Segment::This, 19));
 
     }
 }
