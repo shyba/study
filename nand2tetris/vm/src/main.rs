@@ -240,7 +240,7 @@ impl CodeGenerator {
                 Instruction::LabeledAddress(
                     self.program_name.clone() + self.static_variables.to_string().as_str(),
                 )
-            }
+            },
             Segment::Pointer => match offset {
                 0 => Instruction::LabeledAddress("THIS".to_owned()),
                 1 => Instruction::LabeledAddress("THAT".to_owned()),
@@ -413,14 +413,9 @@ mod tests {
         );
     }
 
-    #[test]
-    fn generate_push_constant_42() {
-        let expected = vec![
-            "@42", "D=A", "@0", // can we just @SP?
-            "AM=M+1", "M=D",
-        ];
+    fn assert_instructions(expected: &Vec<&str>, vm_instruction: VMInstruction) {
         let instructions = CodeGenerator::new("Test".to_string())
-            .translate(&VMInstruction::Push(Segment::Constant, 42));
+            .translate(&vm_instruction);
         assert_eq!(expected.len(), instructions.len());
         for index in 0..expected.len() {
             let str_instruction = generate_instruction(&instructions[index]);
@@ -429,18 +424,19 @@ mod tests {
     }
 
     #[test]
+    fn generate_push_constant_42() {
+        assert_instructions(&vec![
+            "@42", "D=A", "@0", // can we just @SP?
+            "AM=M+1", "M=D",
+        ], VMInstruction::Push(Segment::Constant, 42));
+    }
+
+    #[test]
     fn generate_push_local_13() {
-        let expected = vec![
+        assert_instructions(&vec![
             "@14", // local (1) + 13 offset
             "D=M", "@0", // can we just @SP?
             "AM=M+1", "M=D",
-        ];
-        let instructions = CodeGenerator::new("Test".to_string())
-            .translate(&VMInstruction::Push(Segment::Local, 13));
-        assert_eq!(expected.len(), instructions.len());
-        for index in 0..expected.len() {
-            let str_instruction = generate_instruction(&instructions[index]);
-            assert_eq!(expected[index], str_instruction);
-        }
+        ], VMInstruction::Push(Segment::Local, 13));
     }
 }
