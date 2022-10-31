@@ -203,7 +203,7 @@ impl CodeGenerator {
                     Segment::Constant => {
                         // load constant
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
-                        instructions.extend(self.gen_push_from_d()) // push D
+                        instructions.extend(self.gen_push_d()) // push D
                     }
                     Segment::Pointer => {
                         instructions.extend(vec![
@@ -218,12 +218,12 @@ impl CodeGenerator {
                                 destination_op: DestOp::D,
                             }),
                         ]);
-                        instructions.extend(self.gen_push_from_d()) // push D
+                        instructions.extend(self.gen_push_d()) // push D
                     }
                     _ => {
                         // all other cases are loading from memory segments
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
-                        instructions.extend(self.gen_push_from_d()) // push D
+                        instructions.extend(self.gen_push_d()) // push D
                     }
                 }
             }
@@ -303,19 +303,27 @@ impl CodeGenerator {
         result
     }
 
-    fn gen_push_from_d(&self) -> Vec<Instruction> {
+    fn gen_push_d(&self) -> Vec<Instruction> {
         let mut instructions = vec![];
         // @SP
         instructions.push(Instruction::Address(0));
-        // AM = M+1 (AM = SP++)
+        // A=M
         instructions.push(Instruction::Compute(ComputeFields {
-            compute_op: ComputeOp::IncA(true),
+            compute_op: ComputeOp::A(true),
             jump_op: JumpOp::Nothing,
-            destination_op: DestOp::AM,
+            destination_op: DestOp::A,
         }));
         // M=D
         instructions.push(Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::D,
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::M,
+        }));
+        // @SP
+        instructions.push(Instruction::Address(0));
+        // M=M+1
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::IncA(true),
             jump_op: JumpOp::Nothing,
             destination_op: DestOp::M,
         }));
@@ -467,8 +475,8 @@ mod tests {
     fn generate_push_constant_42() {
         assert_instructions(
             &vec![
-                "@42", "D=A", "@0", // can we just @SP?
-                "AM=M+1", "M=D",
+                "@42", "D=A", // can we just @SP?
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::Constant, 42),
         );
@@ -483,8 +491,7 @@ mod tests {
                 "@1",    // LOCAL base addr
                 "A=D+A", // sum offset
                 "D=M",   // read D = RAM[LOCAL + offset]
-                "@0",    // can we just @SP?
-                "AM=M+1", "M=D",
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::Local, 13),
         );
@@ -494,8 +501,8 @@ mod tests {
     fn generate_push_static_20() {
         assert_instructions(
             &vec![
-                "@Test.20", // program name is Test
-                "D=M", "@0", "AM=M+1", "M=D",
+                "@Test.20", "D=M", // program name is Test
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::Static, 20),
         );
@@ -510,7 +517,7 @@ mod tests {
                 "@3",    // THIS base addr
                 "A=D+A", // sum offset
                 "D=M",   // read D = RAM[THIS + offset]
-                "@0", "AM=M+1", "M=D",
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::This, 19),
         );
@@ -525,7 +532,7 @@ mod tests {
                 "@4",    // THAT base addr
                 "A=D+A", // sum offset
                 "D=M",   // read D = RAM[THAT + offset]
-                "@0", "AM=M+1", "M=D",
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::That, 15),
         );
@@ -537,7 +544,7 @@ mod tests {
             &vec![
                 "@3",  // THIS base addr
                 "D=M", // read D = RAM[THIS]
-                "@0", "AM=M+1", "M=D",
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::Pointer, 0),
         );
@@ -552,9 +559,25 @@ mod tests {
                 "@5",    // THAT base addr
                 "A=D+A", // sum offset
                 "D=M",   // read D = RAM[THAT + offset]
-                "@0", "AM=M+1", "M=D",
+                "@0", "A=M", "M=D", "@0", "M=M+1"
             ],
             VMInstruction::Push(Segment::Temp, 4),
         );
     }
+
+    #[test]
+    fn generate_pop_local_2() {
+        assert_instructions(
+            &vec![
+                "@2",    // load offset
+                "D=A",   // store offset in D
+                "@5",    // THAT base addr
+                "A=D+A", // sum offset
+                "D=M",   // read D = RAM[THAT + offset]
+                "@0", "A=M", "M=D", "@0", "M=M-1", // RAM[SP] = D, SP-=1
+            ],
+            VMInstruction::Push(Segment::Temp, 4),
+        );
+    }
+
 }
