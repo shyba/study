@@ -113,7 +113,7 @@ fn parse_segment(segment: &str) -> Segment {
 }
 
 // move this to assembler crate?
-fn generate_instruction(ins: Instruction) -> String {
+fn generate_instruction(ins: &Instruction) -> String {
     match ins {
         Instruction::Address(value) => format!("@{}", value),
         Instruction::LabeledAddress(value) => format!("@{}", value),
@@ -124,8 +124,18 @@ fn generate_instruction(ins: Instruction) -> String {
     }
 }
 
-fn generate_compute_instruction(fields: ComputeFields) -> String {
+fn generate_compute_instruction(fields: &ComputeFields) -> String {
     let mut result = String::new();
+    result.push_str(match fields.destination_op {
+        DestOp::M => "M=",
+        DestOp::D => "D=",
+        DestOp::A => "A=",
+        DestOp::DM => "DM=",
+        DestOp::AM => "AM=",
+        DestOp::AD => "AD=",
+        DestOp::ADM => "ADM=",
+        DestOp::Nothing => "",
+    });
     result.push_str(match fields.compute_op {
         ComputeOp::Zero => "0",
         ComputeOp::One => "1",
@@ -156,16 +166,6 @@ fn generate_compute_instruction(fields: ComputeFields) -> String {
         ComputeOp::DOrA(true) => "D|M",
         ComputeOp::DOrA(false) => "D|A",
     });
-    result.push_str(match fields.destination_op {
-        DestOp::M => "M",
-        DestOp::D => "D",
-        DestOp::A => "A",
-        DestOp::DM => "DM",
-        DestOp::AM => "AM",
-        DestOp::AD => "AD",
-        DestOp::ADM => "ADM",
-        DestOp::Nothing => "",
-    });
     if fields.jump_op == JumpOp::Nothing {
         return result;
     } else if result.len() > 0 {
@@ -191,10 +191,32 @@ struct CodeGenerator {
 
 impl CodeGenerator {
 
-    pub fn translate(vm_instruction: &VMInstruction) -> Vec<Instruction> {
+    pub fn new(program_name: String) -> CodeGenerator {
+        CodeGenerator { static_variables: 0, program_name: program_name }
+    }
+
+    pub fn translate(&mut self, vm_instruction: &VMInstruction) -> Vec<Instruction> {
         let mut instructions = vec![];
         match &vm_instruction {
-            VMInstruction::Push(segment, value) => {},
+            VMInstruction::Push(segment, value) => {
+                match segment {
+                    Segment::Constant => {
+                        // load constant
+                        instructions.push(self.segment_to_address_instruction(segment, *value));
+                        // D=A
+                        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::A(false), jump_op: JumpOp::Nothing, destination_op: DestOp::D}));
+                        instructions.extend(self.gen_push_from_d()) // push D
+                    },
+                    _ => {
+                        // all other cases are loading from memory segments
+                        instructions.push(self.segment_to_address_instruction(segment, *value));
+                        // D=M
+                        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::A(true), jump_op: JumpOp::Nothing, destination_op: DestOp::D}));
+                        instructions.extend(self.gen_push_from_d()) // push D
+                    }
+                }
+
+            },
             _ => ()
         }
         instructions
@@ -228,6 +250,17 @@ impl CodeGenerator {
             destination_op: DestOp::D,
         }));
         result
+    }
+
+    fn gen_push_from_d(&self) -> Vec<Instruction> {
+        let mut instructions = vec![];
+        // @SP
+        instructions.push(Instruction::Address(0));
+        // AM = M+1 (AM = SP++)
+        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::IncA(true), jump_op: JumpOp::Nothing, destination_op: DestOp::AM}));
+        // M=D
+        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::D, jump_op: JumpOp::Nothing, destination_op: DestOp::M}));
+        instructions
     }
 
 }
@@ -360,5 +393,22 @@ mod tests {
             ),
             CodeGenerator::load(16)
         );
+    }
+
+    #[test]
+    fn generate_push_constant_42() {
+        let expected = vec!(
+            "@42",
+            "D=A",
+            "@0", // can we just @SP?
+            "AM=M+1",
+            "M=D"
+        );
+        let instructions = CodeGenerator::new("Test".to_string()).translate(&VMInstruction::Push(Segment::Constant, 42));
+        assert_eq!(expected.len(), instructions.len());
+        for index in 0..expected.len() {
+            let str_instruction = generate_instruction(&instructions[index]);
+            assert_eq!(expected[index], str_instruction);
+        }
     }
 }
