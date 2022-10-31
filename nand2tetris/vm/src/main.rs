@@ -411,4 +411,21 @@ mod tests {
             assert_eq!(expected[index], str_instruction);
         }
     }
+
+    #[test]
+    fn generate_push_local_13() {
+        let expected = vec!(
+            "@14",  // local (1) + 13 offset
+            "D=M",
+            "@0", // can we just @SP?
+            "AM=M+1",
+            "M=D"
+        );
+        let instructions = CodeGenerator::new("Test".to_string()).translate(&VMInstruction::Push(Segment::Local, 13));
+        assert_eq!(expected.len(), instructions.len());
+        for index in 0..expected.len() {
+            let str_instruction = generate_instruction(&instructions[index]);
+            assert_eq!(expected[index], str_instruction);
+        }
+    }
 }
