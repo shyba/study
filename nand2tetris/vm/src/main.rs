@@ -186,13 +186,15 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
 
 struct CodeGenerator {
     static_variables: u16,
-    program_name: String
+    program_name: String,
 }
 
 impl CodeGenerator {
-
     pub fn new(program_name: String) -> CodeGenerator {
-        CodeGenerator { static_variables: 0, program_name: program_name }
+        CodeGenerator {
+            static_variables: 0,
+            program_name: program_name,
+        }
     }
 
     pub fn translate(&mut self, vm_instruction: &VMInstruction) -> Vec<Instruction> {
@@ -204,20 +206,27 @@ impl CodeGenerator {
                         // load constant
                         instructions.push(self.segment_to_address_instruction(segment, *value));
                         // D=A
-                        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::A(false), jump_op: JumpOp::Nothing, destination_op: DestOp::D}));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(false),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
                         instructions.extend(self.gen_push_from_d()) // push D
-                    },
+                    }
                     _ => {
                         // all other cases are loading from memory segments
                         instructions.push(self.segment_to_address_instruction(segment, *value));
                         // D=M
-                        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::A(true), jump_op: JumpOp::Nothing, destination_op: DestOp::D}));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
                         instructions.extend(self.gen_push_from_d()) // push D
                     }
                 }
-
-            },
-            _ => ()
+            }
+            _ => (),
         }
         instructions
     }
@@ -228,16 +237,18 @@ impl CodeGenerator {
             Segment::Temp => Instruction::Address(5 + offset),
             Segment::Static => {
                 self.static_variables += 1;
-                Instruction::LabeledAddress(self.program_name.clone() + self.static_variables.to_string().as_str())
-            },
+                Instruction::LabeledAddress(
+                    self.program_name.clone() + self.static_variables.to_string().as_str(),
+                )
+            }
             Segment::Pointer => match offset {
                 0 => Instruction::LabeledAddress("THIS".to_owned()),
                 1 => Instruction::LabeledAddress("THAT".to_owned()),
-                _ => panic!("pointer with a value that is not 1/0 is illegal")
+                _ => panic!("pointer with a value that is not 1/0 is illegal"),
             },
             Segment::Local => Instruction::Address(1 + offset),
             Segment::This => Instruction::Address(3 + offset),
-            Segment::That => Instruction::Address(4 + offset)
+            Segment::That => Instruction::Address(4 + offset),
         }
     }
 
@@ -257,12 +268,19 @@ impl CodeGenerator {
         // @SP
         instructions.push(Instruction::Address(0));
         // AM = M+1 (AM = SP++)
-        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::IncA(true), jump_op: JumpOp::Nothing, destination_op: DestOp::AM}));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::IncA(true),
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::AM,
+        }));
         // M=D
-        instructions.push(Instruction::Compute(ComputeFields {compute_op: ComputeOp::D, jump_op: JumpOp::Nothing, destination_op: DestOp::M}));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::D,
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::M,
+        }));
         instructions
     }
-
 }
 
 struct Parser {
@@ -397,14 +415,12 @@ mod tests {
 
     #[test]
     fn generate_push_constant_42() {
-        let expected = vec!(
-            "@42",
-            "D=A",
-            "@0", // can we just @SP?
-            "AM=M+1",
-            "M=D"
-        );
-        let instructions = CodeGenerator::new("Test".to_string()).translate(&VMInstruction::Push(Segment::Constant, 42));
+        let expected = vec![
+            "@42", "D=A", "@0", // can we just @SP?
+            "AM=M+1", "M=D",
+        ];
+        let instructions = CodeGenerator::new("Test".to_string())
+            .translate(&VMInstruction::Push(Segment::Constant, 42));
         assert_eq!(expected.len(), instructions.len());
         for index in 0..expected.len() {
             let str_instruction = generate_instruction(&instructions[index]);
@@ -414,14 +430,13 @@ mod tests {
 
     #[test]
     fn generate_push_local_13() {
-        let expected = vec!(
-            "@14",  // local (1) + 13 offset
-            "D=M",
-            "@0", // can we just @SP?
-            "AM=M+1",
-            "M=D"
-        );
-        let instructions = CodeGenerator::new("Test".to_string()).translate(&VMInstruction::Push(Segment::Local, 13));
+        let expected = vec![
+            "@14", // local (1) + 13 offset
+            "D=M", "@0", // can we just @SP?
+            "AM=M+1", "M=D",
+        ];
+        let instructions = CodeGenerator::new("Test".to_string())
+            .translate(&VMInstruction::Push(Segment::Local, 13));
         assert_eq!(expected.len(), instructions.len());
         for index in 0..expected.len() {
             let str_instruction = generate_instruction(&instructions[index]);
