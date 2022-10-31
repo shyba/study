@@ -542,4 +542,19 @@ mod tests {
             VMInstruction::Push(Segment::Pointer, 0),
         );
     }
+
+    #[test]
+    fn generate_push_temp_4() {
+        assert_instructions(
+            &vec![
+                "@4",    // load offset
+                "D=A",   // store offset in D
+                "@5",    // THAT base addr
+                "A=D+A", // sum offset
+                "D=M",   // read D = RAM[THAT + offset]
+                "@0", "AM=M+1", "M=D",
+            ],
+            VMInstruction::Push(Segment::Temp, 4),
+        );
+    }
 }
