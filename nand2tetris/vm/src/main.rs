@@ -671,4 +671,20 @@ mod tests {
             VMInstruction::Pop(Segment::This, 10),
         );
     }
+
+    #[test]
+    fn generate_pop_that_44() {
+        assert_instructions(
+            &vec![
+                "@44",   // load offset
+                "D=A",   // store offset in D
+                "@4",    // THAT base addr
+                "D=D+M", // sum offset, store address in D
+                "@13", "M=D", // R13=D temporarly
+                "@0", "A=M", "D=M", "@0", "M=M-1", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D", // (*R13) = D
+            ],
+            VMInstruction::Pop(Segment::That, 44),
+        );
+    }
 }
