@@ -638,6 +638,21 @@ mod tests {
     }
 
     #[test]
+    fn generate_push_argument_13() {
+        assert_instructions(
+            &vec![
+                "@13",   // load offset
+                "D=A",   // store offset in D
+                "@2",    // THIS base addr
+                "A=D+A", // sum offset
+                "D=M",   // read D = RAM[THIS + offset]
+                "@0", "A=M", "M=D", "@0", "M=M+1",
+            ],
+            VMInstruction::Push(Segment::Argument, 13),
+        );
+    }
+
+    #[test]
     fn generate_push_this_19() {
         assert_instructions(
             &vec![
