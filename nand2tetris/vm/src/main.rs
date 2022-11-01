@@ -286,24 +286,20 @@ impl CodeGenerator {
             VMInstruction::Arithmetic(operation) => match operation {
                 Arithmetic::Add => {
                     instructions.extend(self.pop_to_d());
-                    instructions.push(
-                        Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::DPlusA(true),
-                            jump_op: JumpOp::Nothing,
-                            destination_op: DestOp::M,
-                        }),
-                    );
-                },
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DPlusA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                }
                 Arithmetic::Sub => {
                     instructions.extend(self.pop_to_d());
-                    instructions.push(
-                        Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::DMinusA(true),
-                            jump_op: JumpOp::Nothing,
-                            destination_op: DestOp::M,
-                        }),
-                    );
-                },
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DMinusA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                }
                 _ => (),
             },
             _ => (),
@@ -313,29 +309,28 @@ impl CodeGenerator {
 
     fn pop_to_d(&self) -> Vec<Instruction> {
         vec![
-                    Instruction::Address(0),
-                    Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::A(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::A,
-                    }),
-                    Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::A(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::D,
-                    }),
-                    Instruction::Address(0),
-                    Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::DecA(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::M,
-                    }),
-                    Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::A(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::A,
-                    }),
-
+            Instruction::Address(0),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::A,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::D,
+            }),
+            Instruction::Address(0),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::A,
+            }),
         ]
     }
 
@@ -487,11 +482,19 @@ fn process_file(file_path: PathBuf) {
     println!("Processing file: {:?}", file_path);
     let file = std::fs::File::open(&file_path).expect("Error opening input file");
     let mut parser = Parser::new();
-    let file_name = file_path.file_name().unwrap().to_str().unwrap().split(".").next().unwrap();
+    let file_name = file_path
+        .file_name()
+        .unwrap()
+        .to_str()
+        .unwrap()
+        .split(".")
+        .next()
+        .unwrap();
     let mut translator = CodeGenerator::new(file_name.to_string());
 
     let output_file_path = file_path.to_str().unwrap().replace(".vm", ".asm");
-    let mut output_file = std::fs::File::create(&output_file_path).expect("Error opening output file");
+    let mut output_file =
+        std::fs::File::create(&output_file_path).expect("Error opening output file");
     for line in std::io::BufReader::new(file).lines() {
         let parsed_line = parser.parse_line(&line.expect("IO error reading line."));
         dbg!(&parsed_line);
