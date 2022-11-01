@@ -313,6 +313,11 @@ impl CodeGenerator {
         vec![
             Instruction::Address(0),
             Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::A(true),
                 jump_op: JumpOp::Nothing,
                 destination_op: DestOp::A,
@@ -324,9 +329,9 @@ impl CodeGenerator {
             }),
             Instruction::Address(0),
             Instruction::Compute(ComputeFields {
-                compute_op: ComputeOp::DecA(true),
+                compute_op: ComputeOp::DecA(false),
                 jump_op: JumpOp::Nothing,
-                destination_op: DestOp::M,
+                destination_op: DestOp::A,
             }),
             Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::A(true),
@@ -780,8 +785,8 @@ mod tests {
     fn generate_add() {
         assert_instructions(
             &vec![
-                //D=RAM[SP], SP--, RAM[SP]+=D
-                "@0", "A=M", "D=M", "@0", "M=M-1", "A=M", "M=D+M",
+                //SP--, D=RAM[SP], RAM[SP-1]+=D
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=A-1", "A=M", "M=D+M"
             ],
             VMInstruction::Arithmetic(Arithmetic::Add),
         );
@@ -791,8 +796,8 @@ mod tests {
     fn generate_sub() {
         assert_instructions(
             &vec![
-                //D=RAM[SP], SP--, RAM[SP]-=D
-                "@0", "A=M", "D=M", "@0", "M=M-1", "A=M", "M=D-M",
+                //SP--, D=RAM[SP], RAM[SP-1]-=D
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=A-1", "A=M", "M=D-M"
             ],
             VMInstruction::Arithmetic(Arithmetic::Sub),
         );
