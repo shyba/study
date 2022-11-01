@@ -322,7 +322,7 @@ impl CodeGenerator {
                 Arithmetic::Sub => {
                     instructions.extend(self.pop_to_d());
                     instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::DMinusA(true),
+                        compute_op: ComputeOp::AMinusD(true),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
@@ -812,7 +812,7 @@ mod tests {
         assert_instructions(
             &vec![
                 //SP--, D=RAM[SP], RAM[SP-1]-=D
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D-M",
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=M-D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Sub),
         );
