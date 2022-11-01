@@ -278,7 +278,7 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }));
                     instructions.extend(self.pop_to_r13_pointer())
-                },
+                }
                 Segment::Temp => {
                     instructions.extend(self.segment_to_address_instruction(segment, *value));
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -358,11 +358,6 @@ impl CodeGenerator {
                 jump_op: JumpOp::Nothing,
                 destination_op: DestOp::A,
             }),
-            Instruction::Compute(ComputeFields {
-                compute_op: ComputeOp::A(true),
-                jump_op: JumpOp::Nothing,
-                destination_op: DestOp::A,
-            }),
         ]
     }
 
@@ -374,7 +369,7 @@ impl CodeGenerator {
         let mut instructions = vec![match &segment {
             Segment::Static => {
                 Instruction::LabeledAddress(self.program_name.clone() + "." + &offset.to_string())
-            },
+            }
             Segment::Temp => Instruction::Address(5 + offset),
             _ => Instruction::Address(offset),
         }];
@@ -701,8 +696,8 @@ mod tests {
     fn generate_push_temp_4() {
         assert_instructions(
             &vec![
-                "@9",    // TEMP for 4 (5 + 4)
-                "D=A",   // read D = RAM[9]
+                "@9",  // TEMP for 4 (5 + 4)
+                "D=A", // read D = RAM[9]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
             VMInstruction::Push(Segment::Temp, 4),
@@ -775,7 +770,7 @@ mod tests {
     fn generate_pop_temp_7() {
         assert_instructions(
             &vec![
-                "@12",    // TEMP (5 + 7)
+                "@12", // TEMP (5 + 7)
                 "D=A", // store address in D
                 "@13", "M=D", // R13=D temporarly
                 "@0", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
@@ -806,7 +801,7 @@ mod tests {
         assert_instructions(
             &vec![
                 //SP--, D=RAM[SP], RAM[SP-1]+=D
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "A=M", "M=D+M",
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D+M",
             ],
             VMInstruction::Arithmetic(Arithmetic::Add),
         );
@@ -817,7 +812,7 @@ mod tests {
         assert_instructions(
             &vec![
                 //SP--, D=RAM[SP], RAM[SP-1]-=D
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "A=M", "M=D-M",
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D-M",
             ],
             VMInstruction::Arithmetic(Arithmetic::Sub),
         );
