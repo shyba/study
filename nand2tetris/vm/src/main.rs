@@ -7,6 +7,7 @@ use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp
 
 #[derive(Debug)]
 pub enum Segment {
+    Argument,
     Local,
     Static,
     Constant,
@@ -102,6 +103,7 @@ fn parse_pop(line: String) -> VMInstruction {
 
 fn parse_segment(segment: &str) -> Segment {
     match segment {
+        "argument" => Segment::Argument,
         "local" => Segment::Local,
         "static" => Segment::Static,
         "this" => Segment::This,
@@ -358,6 +360,7 @@ impl CodeGenerator {
         }
         match segment {
             Segment::Local => instructions.push(Instruction::Address(1)),
+            Segment::Argument => instructions.push(Instruction::Address(2)),
             Segment::This => instructions.push(Instruction::Address(3)),
             Segment::That => instructions.push(Instruction::Address(4)),
             Segment::Temp => instructions.push(Instruction::Address(5)),
@@ -766,6 +769,22 @@ mod tests {
                 "@13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Temp, 7),
+        );
+    }
+
+    #[test]
+    fn generate_pop_argument_9() {
+        assert_instructions(
+            &vec![
+                "@9",    // load offset
+                "D=A",   // store offset in D
+                "@2",    // argument base addr
+                "D=D+M", // sum offset, store address in D
+                "@13", "M=D", // R13=D temporarly
+                "@0", "A=M", "D=M", "@0", "M=M-1", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D", // (*R13) = D
+            ],
+            VMInstruction::Pop(Segment::Argument, 9),
         );
     }
 
