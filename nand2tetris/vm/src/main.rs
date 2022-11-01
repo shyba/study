@@ -212,6 +212,16 @@ impl CodeGenerator {
                         }));
                         instructions.extend(self.gen_push_d()) // push D
                     }
+                    Segment::Temp => {
+                        // load constant
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(false),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
+                        instructions.extend(self.gen_push_d()) // push D
+                    }
                     Segment::Static => {
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.push(Instruction::Compute(ComputeFields {
@@ -258,6 +268,21 @@ impl CodeGenerator {
                     instructions.extend(self.segment_to_address_instruction(segment, *value));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }));
+                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                    instructions.extend(self.pop_to_r13_pointer())
+                },
+                Segment::Temp => {
+                    instructions.extend(self.segment_to_address_instruction(segment, *value));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(false),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
@@ -349,11 +374,13 @@ impl CodeGenerator {
         let mut instructions = vec![match &segment {
             Segment::Static => {
                 Instruction::LabeledAddress(self.program_name.clone() + "." + &offset.to_string())
-            }
+            },
+            Segment::Temp => Instruction::Address(5 + offset),
             _ => Instruction::Address(offset),
         }];
         match segment {
             Segment::Constant => (),
+            Segment::Temp => (),
             Segment::Static => (),
             _ => {
                 instructions.push(Instruction::Compute(ComputeFields {
@@ -368,7 +395,6 @@ impl CodeGenerator {
             Segment::Argument => instructions.push(Instruction::Address(2)),
             Segment::This => instructions.push(Instruction::Address(3)),
             Segment::That => instructions.push(Instruction::Address(4)),
-            Segment::Temp => instructions.push(Instruction::Address(5)),
             _ => (),
         }
         instructions
@@ -675,11 +701,8 @@ mod tests {
     fn generate_push_temp_4() {
         assert_instructions(
             &vec![
-                "@4",    // load offset
-                "D=A",   // store offset in D
-                "@5",    // THAT base addr
-                "A=D+A", // sum offset
-                "D=M",   // read D = RAM[THAT + offset]
+                "@9",    // TEMP for 4 (5 + 4)
+                "D=A",   // read D = RAM[9]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
             VMInstruction::Push(Segment::Temp, 4),
@@ -752,10 +775,8 @@ mod tests {
     fn generate_pop_temp_7() {
         assert_instructions(
             &vec![
-                "@7",    // load offset
-                "D=A",   // store offset in D
-                "@5",    // THAT base addr
-                "D=D+M", // sum offset, store address in D
+                "@12",    // TEMP (5 + 7)
+                "D=A", // store address in D
                 "@13", "M=D", // R13=D temporarly
                 "@0", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
                 "@13", "A=M", "M=D", // (*R13) = D
