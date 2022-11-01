@@ -283,6 +283,38 @@ impl CodeGenerator {
                     instructions.extend(self.pop_to_r13_pointer())
                 }
             },
+            VMInstruction::Arithmetic(operation) => match operation {
+                Arithmetic::Add => instructions.extend(vec![
+                    Instruction::Address(0),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::Address(0),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DecA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DPlusA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                ]),
+                _ => (),
+            },
             _ => (),
         }
         instructions
@@ -692,7 +724,7 @@ mod tests {
     fn generate_pop_temp_7() {
         assert_instructions(
             &vec![
-                "@7",   // load offset
+                "@7",    // load offset
                 "D=A",   // store offset in D
                 "@5",    // THAT base addr
                 "D=D+M", // sum offset, store address in D
@@ -701,6 +733,17 @@ mod tests {
                 "@13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Temp, 7),
+        );
+    }
+
+    #[test]
+    fn generate_add() {
+        assert_instructions(
+            &vec![
+                //D=RAM[SP], SP--, RAM[SP]+=D
+                "@0", "A=M", "D=M", "@0", "M=M-1", "A=M", "M=D+M",
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Add),
         );
     }
 }
