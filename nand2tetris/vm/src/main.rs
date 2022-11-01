@@ -203,8 +203,22 @@ impl CodeGenerator {
                     Segment::Constant => {
                         // load constant
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(false),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
                         instructions.extend(self.gen_push_d()) // push D
-                    }
+                    },
+                    Segment::Static => {
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
+                        instructions.extend(self.gen_push_d()) // push D
+                    },
                     Segment::Pointer => {
                         instructions.extend(vec![
                             match value {
@@ -219,12 +233,43 @@ impl CodeGenerator {
                             }),
                         ]);
                         instructions.extend(self.gen_push_d()) // push D
-                    }
+                    },
                     _ => {
                         // all other cases are loading from memory segments
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::DPlusA(false),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::A,
+                        }));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
                         instructions.extend(self.gen_push_d()) // push D
                     }
+                }
+            },
+            VMInstruction::Pop(segment, value) => {
+                match segment {
+                    Segment::Local => {
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::DPlusA(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
+                        instructions.push(Instruction::Address(13));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::D,
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::M,
+                        }));
+                        instructions.extend(self.pop_to_r13_pointer())
+
+                    }
+                    _ => {}
                 }
             }
             _ => (),
@@ -261,34 +306,6 @@ impl CodeGenerator {
             Segment::Temp => instructions.push(Instruction::Address(5)),
             _ => (),
         }
-        match segment {
-            Segment::Constant => {
-                instructions.push(Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::A(false),
-                    jump_op: JumpOp::Nothing,
-                    destination_op: DestOp::D,
-                }));
-            }
-            Segment::Static => {
-                instructions.push(Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::A(true),
-                    jump_op: JumpOp::Nothing,
-                    destination_op: DestOp::D,
-                }));
-            }
-            _ => {
-                instructions.push(Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::DPlusA(false),
-                    jump_op: JumpOp::Nothing,
-                    destination_op: DestOp::A,
-                }));
-                instructions.push(Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::A(true),
-                    jump_op: JumpOp::Nothing,
-                    destination_op: DestOp::D,
-                }));
-            }
-        };
         instructions
     }
 
@@ -328,6 +345,39 @@ impl CodeGenerator {
             destination_op: DestOp::M,
         }));
         instructions
+    }
+
+    fn pop_to_r13_pointer(&self) -> Vec<Instruction> {
+        vec![
+            Instruction::Address(0),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::A,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::D,
+            }),
+            Instruction::Address(0),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+            Instruction::Address(13),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::A,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::D,
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            })
+        ]
     }
 }
 
@@ -571,12 +621,13 @@ mod tests {
             &vec![
                 "@2",    // load offset
                 "D=A",   // store offset in D
-                "@5",    // THAT base addr
-                "A=D+A", // sum offset
-                "D=M",   // read D = RAM[THAT + offset]
-                "@0", "A=M", "M=D", "@0", "M=M-1", // RAM[SP] = D, SP-=1
+                "@1",    // LOCAL base addr
+                "D=D+M", // sum offset, store address in D
+                "@13", "M=D", // R13=D temporarly
+                "@0", "A=M", "D=M", "@0", "M=M-1", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D" // (*R13) = D
             ],
-            VMInstruction::Push(Segment::Temp, 4),
+            VMInstruction::Pop(Segment::Local, 2),
         );
     }
 
