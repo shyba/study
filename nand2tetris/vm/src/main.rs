@@ -369,17 +369,6 @@ impl CodeGenerator {
         instructions
     }
 
-    fn load(addr: u16) -> Vec<Instruction> {
-        let mut result = vec![];
-        result.push(Instruction::Address(addr));
-        result.push(Instruction::Compute(ComputeFields {
-            compute_op: ComputeOp::A(true),
-            jump_op: JumpOp::Nothing,
-            destination_op: DestOp::D,
-        }));
-        result
-    }
-
     fn gen_push_d(&self) -> Vec<Instruction> {
         let mut instructions = vec![];
         // @SP
@@ -573,22 +562,6 @@ impl Iterator for ValidFiles<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn generate_load_instructions() {
-        // load 16 to A register
-        assert_eq!(
-            vec!(
-                Instruction::Address(16),
-                Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::A(true),
-                    jump_op: JumpOp::Nothing,
-                    destination_op: DestOp::D
-                })
-            ),
-            CodeGenerator::load(16)
-        );
-    }
 
     fn assert_instructions(expected: &Vec<&str>, vm_instruction: VMInstruction) {
         let instructions = CodeGenerator::new("Test".to_string()).translate(&vm_instruction);
