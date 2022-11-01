@@ -267,8 +267,23 @@ impl CodeGenerator {
                             destination_op: DestOp::M,
                         }));
                         instructions.extend(self.pop_to_r13_pointer())
+                    },
+                    Segment::Static => {
+                        instructions.extend(self.segment_to_address_instruction(segment, *value));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }));
+                        instructions.push(Instruction::Address(13));
+                        instructions.push(Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::D,
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::M,
+                        }));
+                        instructions.extend(self.pop_to_r13_pointer())
 
-                    }
+                    },
                     _ => {}
                 }
             }
@@ -628,6 +643,20 @@ mod tests {
                 "@13", "A=M", "M=D" // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Local, 2),
+        );
+    }
+
+    #[test]
+    fn generate_pop_static_3() {
+        assert_instructions(
+            &vec![
+                "@Test.3",    // load offset
+                "D=M", // store address in D
+                "@13", "M=D", // R13=D temporarly
+                "@0", "A=M", "D=M", "@0", "M=M-1", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D" // (*R13) = D
+            ],
+            VMInstruction::Pop(Segment::Static, 3),
         );
     }
 
