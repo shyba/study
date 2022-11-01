@@ -250,7 +250,7 @@ impl CodeGenerator {
                         // all other cases are loading from memory segments
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.push(Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::DPlusA(false),
+                            compute_op: ComputeOp::DPlusA(true),
                             jump_op: JumpOp::Nothing,
                             destination_op: DestOp::A,
                         }));
@@ -616,7 +616,7 @@ mod tests {
                 "@13",   // 13 offset
                 "D=A",   // store offset in D
                 "@1",    // LOCAL base addr
-                "A=D+A", // sum offset
+                "A=D+M", // sum offset
                 "D=M",   // read D = RAM[LOCAL + offset]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
@@ -642,7 +642,7 @@ mod tests {
                 "@13",   // load offset
                 "D=A",   // store offset in D
                 "@2",    // THIS base addr
-                "A=D+A", // sum offset
+                "A=D+M", // sum offset
                 "D=M",   // read D = RAM[THIS + offset]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
@@ -657,7 +657,7 @@ mod tests {
                 "@19",   // load offset
                 "D=A",   // store offset in D
                 "@3",    // THIS base addr
-                "A=D+A", // sum offset
+                "A=D+M", // sum offset
                 "D=M",   // read D = RAM[THIS + offset]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
@@ -672,7 +672,7 @@ mod tests {
                 "@15",   // load offset
                 "D=A",   // store offset in D
                 "@4",    // THAT base addr
-                "A=D+A", // sum offset
+                "A=D+M", // sum offset
                 "D=M",   // read D = RAM[THAT + offset]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
