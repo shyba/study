@@ -216,7 +216,7 @@ impl CodeGenerator {
                         // load constant
                         instructions.extend(self.segment_to_address_instruction(segment, *value));
                         instructions.push(Instruction::Compute(ComputeFields {
-                            compute_op: ComputeOp::A(false),
+                            compute_op: ComputeOp::A(true),
                             jump_op: JumpOp::Nothing,
                             destination_op: DestOp::D,
                         }));
@@ -697,7 +697,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@9",  // TEMP for 4 (5 + 4)
-                "D=A", // read D = RAM[9]
+                "D=M", // read D = RAM[9]
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
             VMInstruction::Push(Segment::Temp, 4),
