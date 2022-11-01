@@ -284,7 +284,35 @@ impl CodeGenerator {
                 }
             },
             VMInstruction::Arithmetic(operation) => match operation {
-                Arithmetic::Add => instructions.extend(vec![
+                Arithmetic::Add => {
+                    instructions.extend(self.pop_to_d());
+                    instructions.push(
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::DPlusA(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::M,
+                        }),
+                    );
+                },
+                Arithmetic::Sub => {
+                    instructions.extend(self.pop_to_d());
+                    instructions.push(
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::DMinusA(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::M,
+                        }),
+                    );
+                },
+                _ => (),
+            },
+            _ => (),
+        }
+        instructions
+    }
+
+    fn pop_to_d(&self) -> Vec<Instruction> {
+        vec![
                     Instruction::Address(0),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(true),
@@ -307,17 +335,8 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::A,
                     }),
-                    Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::DPlusA(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::M,
-                    }),
-                ]),
-                _ => (),
-            },
-            _ => (),
-        }
-        instructions
+
+        ]
     }
 
     fn segment_to_address_instruction(
@@ -744,6 +763,17 @@ mod tests {
                 "@0", "A=M", "D=M", "@0", "M=M-1", "A=M", "M=D+M",
             ],
             VMInstruction::Arithmetic(Arithmetic::Add),
+        );
+    }
+
+    #[test]
+    fn generate_sub() {
+        assert_instructions(
+            &vec![
+                //D=RAM[SP], SP--, RAM[SP]-=D
+                "@0", "A=M", "D=M", "@0", "M=M-1", "A=M", "M=D-M",
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Sub),
         );
     }
 }
