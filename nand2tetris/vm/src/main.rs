@@ -1,6 +1,6 @@
 use std::fs;
 use std::fs::ReadDir;
-use std::io::BufRead;
+use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
@@ -455,7 +455,7 @@ impl Parser {
         self.line_number += 1;
         let lower_line = line.trim().to_lowercase();
 
-        if line.contains("//") {
+        if line.len() == 0 || line.contains("//") {
             VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
@@ -485,11 +485,22 @@ fn main() {
 
 fn process_file(file_path: PathBuf) {
     println!("Processing file: {:?}", file_path);
-    let file = std::fs::File::open(file_path).expect("Error opening file");
+    let file = std::fs::File::open(&file_path).expect("Error opening input file");
     let mut parser = Parser::new();
+    let file_name = file_path.file_name().unwrap().to_str().unwrap().split(".").next().unwrap();
+    let mut translator = CodeGenerator::new(file_name.to_string());
+
+    let output_file_path = file_path.to_str().unwrap().replace(".vm", ".asm");
+    let mut output_file = std::fs::File::create(&output_file_path).expect("Error opening output file");
     for line in std::io::BufReader::new(file).lines() {
         let parsed_line = parser.parse_line(&line.expect("IO error reading line."));
-        dbg!(parsed_line);
+        dbg!(&parsed_line);
+        for instruction in translator.translate(&parsed_line) {
+            dbg!(&instruction);
+            let string_instruction = generate_instruction(&instruction);
+            dbg!(&string_instruction);
+            writeln!(output_file, "{}", &string_instruction).unwrap();
+        }
     }
 }
 
