@@ -104,6 +104,7 @@ fn parse_pop(line: String) -> VMInstruction {
 fn parse_segment(segment: &str) -> Segment {
     match segment {
         "argument" => Segment::Argument,
+        "pointer" => Segment::Pointer,
         "local" => Segment::Local,
         "static" => Segment::Static,
         "this" => Segment::This,
@@ -267,7 +268,26 @@ impl CodeGenerator {
                 Segment::Static => {
                     instructions.extend(self.segment_to_address_instruction(segment, *value));
                     instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::A(true),
+                        compute_op: ComputeOp::A(false),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }));
+                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                    instructions.extend(self.pop_to_r13_pointer())
+                },
+                Segment::Pointer => {
+                    match value {
+                        0 => instructions.push(Instruction::Address(3)),
+                        1 => instructions.push(Instruction::Address(4)),
+                        _ => panic!("pointer can only be 0 or 1")
+                    }
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(false),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
@@ -681,7 +701,7 @@ mod tests {
     }
 
     #[test]
-    fn generate_push_pointer_0() {
+    fn generate_push_pointer() {
         assert_instructions(
             &vec![
                 "@3",  // THIS base addr
@@ -689,6 +709,14 @@ mod tests {
                 "@0", "A=M", "M=D", "@0", "M=M+1",
             ],
             VMInstruction::Push(Segment::Pointer, 0),
+        );
+        assert_instructions(
+            &vec![
+                "@4",  // THIS base addr
+                "D=M", // read D = RAM[THIS]
+                "@0", "A=M", "M=D", "@0", "M=M+1",
+            ],
+            VMInstruction::Push(Segment::Pointer, 1),
         );
     }
 
@@ -725,7 +753,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@Test.3", // load offset
-                "D=M",     // store address in D
+                "D=A",     // store address in D
                 "@13", "M=D", // R13=D temporarly
                 "@0", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
                 "@13", "A=M", "M=D", // (*R13) = D
@@ -747,6 +775,30 @@ mod tests {
                 "@13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::This, 10),
+        );
+    }
+
+    #[test]
+    fn generate_pop_pointer() {
+        assert_instructions(
+            &vec![
+                "@3",  // THIS base addr
+                "D=A", // store address in D TODO: OPTIMIZE THAT
+                "@13", "M=D", // R13=D temporarly
+                "@0", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D", // (*R13) = D
+            ],
+            VMInstruction::Pop(Segment::Pointer, 0),
+        );
+        assert_instructions(
+            &vec![
+                "@4",  // THAT base addr
+                "D=A", // store address in D TODO: OPTIMIZE THAT
+                "@13", "M=D", // R13=D temporarly
+                "@0", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
+                "@13", "A=M", "M=D", // (*R13) = D
+            ],
+            VMInstruction::Pop(Segment::Pointer, 1),
         );
     }
 
