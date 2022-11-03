@@ -361,61 +361,62 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }));
 		},
-		Arithmetic::Eq => {
-                    // "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
-		    // "@zero.1", "D;JEQ", "D=-1", "@end.2", "0;JMP",
-		    // "@zero.1", "D=0",
-		    // "@end.2", "A=M-1", "M=D"
-                    instructions.extend(self.pop_to_d());
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::AMinusD(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::D,
-                    }));
-		    self.label_counter += 1;
-		    let zero_label = format!("zero.{}", self.label_counter);
-		    instructions.push(Instruction::LabeledAddress(zero_label.clone()));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::D,
-                        jump_op: JumpOp::Equal,
-                        destination_op: DestOp::Nothing,
-                    }));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::MinusOne,
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::D,
-                    }));
-		    self.label_counter += 1;
-		    let end_label = format!("end.{}", self.label_counter);
-		    instructions.push(Instruction::LabeledAddress(end_label.clone()));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::Zero,
-                        jump_op: JumpOp::Unconditional,
-                        destination_op: DestOp::Nothing,
-                    }));
-		    instructions.push(Instruction::Label(zero_label.clone()));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::Zero,
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::D,
-                    }));
-		    instructions.push(Instruction::Label(end_label.clone()));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::DecA(true),
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::A,
-                    }));
-                    instructions.push(Instruction::Compute(ComputeFields {
-                        compute_op: ComputeOp::D,
-                        jump_op: JumpOp::Nothing,
-                        destination_op: DestOp::M,
-                    }));
-		},
+		Arithmetic::Eq => instructions.extend(self.true_or_false(JumpOp::Equal)),
+		Arithmetic::Gt => instructions.extend(self.true_or_false(JumpOp::Greater)),
                 _ => (),
             },
             _ => (),
         }
         instructions
+    }
+
+    fn true_or_false(&mut self, jump_op: JumpOp) -> Vec<Instruction> {
+	let mut instructions = vec![];
+	instructions.extend(self.pop_to_d());
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::AMinusD(true),
+	    jump_op: JumpOp::Nothing,
+	    destination_op: DestOp::D,
+	}));
+	self.label_counter += 1;
+	let true_label = format!("true.{}", self.label_counter);
+	instructions.push(Instruction::LabeledAddress(true_label.clone()));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::D,
+	    jump_op: jump_op,
+	    destination_op: DestOp::Nothing,
+	}));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::Zero,
+	    jump_op: JumpOp::Nothing,
+	    destination_op: DestOp::D,
+	}));
+	self.label_counter += 1;
+	let end_label = format!("end.{}", self.label_counter);
+	instructions.push(Instruction::LabeledAddress(end_label.clone()));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::Zero,
+	    jump_op: JumpOp::Unconditional,
+	    destination_op: DestOp::Nothing,
+	}));
+	instructions.push(Instruction::Label(true_label.clone()));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::MinusOne,
+	    jump_op: JumpOp::Nothing,
+	    destination_op: DestOp::D,
+	}));
+	instructions.push(Instruction::Label(end_label.clone()));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::DecA(true),
+	    jump_op: JumpOp::Nothing,
+	    destination_op: DestOp::A,
+	}));
+	instructions.push(Instruction::Compute(ComputeFields {
+	    compute_op: ComputeOp::D,
+	    jump_op: JumpOp::Nothing,
+	    destination_op: DestOp::M,
+	}));
+	instructions
     }
 
     fn pop_to_d(&self) -> Vec<Instruction> {
@@ -951,11 +952,25 @@ mod tests {
             &vec![
                 //SP--, D=RAM[SP], RAM[SP-1]-=D
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
-		"@zero.1", "D;JEQ", "D=-1", "@end.2", "0;JMP",
-		"(zero.1)", "D=0",
+		"@true.1", "D;JEQ", "D=0", "@end.2", "0;JMP",
+		"(true.1)", "D=-1",
 		"(end.2)", "A=M-1", "M=D"
             ],
             VMInstruction::Arithmetic(Arithmetic::Eq),
+        );
+    }
+
+    #[test]
+    fn generate_gt() {
+        assert_instructions(
+            &vec![
+                //SP--, D=RAM[SP], RAM[SP-1]-=D
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
+		"@true.1", "D;JGT", "D=0", "@end.2", "0;JMP",
+		"(true.1)", "D=-1",
+		"(end.2)", "A=M-1", "M=D"
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Gt),
         );
     }
 }
