@@ -436,6 +436,7 @@ impl CodeGenerator {
             destination_op: DestOp::D,
         }));
         instructions.push(Instruction::Label(end_label.clone()));
+	instructions.push(Instruction::Address(0));
         instructions.push(Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::DecA(true),
             jump_op: JumpOp::Nothing,
@@ -981,7 +982,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JEQ", "D=0",
-                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "@0", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Eq),
         );
@@ -992,7 +993,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JGT", "D=0",
-                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "@0", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Gt),
         );
@@ -1003,7 +1004,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JLT", "D=0",
-                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "@0", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Lt),
         );
