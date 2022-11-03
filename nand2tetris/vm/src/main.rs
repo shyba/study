@@ -372,6 +372,14 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }));
                 },
+                Arithmetic::Or => {
+                    instructions.extend(self.pop_to_d());
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DOrA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                },
                 _ => (),
             },
             _ => (),
@@ -1001,6 +1009,16 @@ mod tests {
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D&M",
             ],
             VMInstruction::Arithmetic(Arithmetic::And),
+        );
+    }
+
+    #[test]
+    fn generate_or() {
+        assert_instructions(
+            &vec![
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D|M",
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Or),
         );
     }
 }
