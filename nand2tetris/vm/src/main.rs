@@ -122,7 +122,7 @@ fn generate_instruction(ins: &Instruction) -> String {
         Instruction::LabeledAddress(value) => format!("@{}", value),
         Instruction::Comment(content) => format!("//{}", content),
         Instruction::Compute(fields) => generate_compute_instruction(fields),
-        Instruction::Label(label) => format!("{}:", label),
+        Instruction::Label(label) => format!("({})", label),
         Instruction::Nothing => String::new(),
     }
 }
@@ -189,12 +189,13 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
 
 struct CodeGenerator {
     program_name: String,
+    label_counter: usize
 }
 
 impl CodeGenerator {
     pub fn new(program_name: String) -> CodeGenerator {
         CodeGenerator {
-            program_name: program_name,
+            program_name: program_name, label_counter: 0
         }
     }
 
@@ -356,6 +357,56 @@ impl CodeGenerator {
                     }));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::NotA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+		},
+		Arithmetic::Eq => {
+                    // "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
+		    // "@zero.1", "D;JEQ", "D=-1", "@end.2", "0;JMP",
+		    // "@zero.1", "D=0",
+		    // "@end.2", "A=M-1", "M=D"
+                    instructions.extend(self.pop_to_d());
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::AMinusD(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }));
+		    self.label_counter += 1;
+		    let zero_label = format!("zero.{}", self.label_counter);
+		    instructions.push(Instruction::LabeledAddress(zero_label.clone()));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Equal,
+                        destination_op: DestOp::Nothing,
+                    }));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::MinusOne,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }));
+		    self.label_counter += 1;
+		    let end_label = format!("end.{}", self.label_counter);
+		    instructions.push(Instruction::LabeledAddress(end_label.clone()));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::Zero,
+                        jump_op: JumpOp::Unconditional,
+                        destination_op: DestOp::Nothing,
+                    }));
+		    instructions.push(Instruction::Label(zero_label.clone()));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::Zero,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }));
+		    instructions.push(Instruction::Label(end_label.clone()));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DecA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
@@ -891,6 +942,20 @@ mod tests {
                 "@0", "A=M-1", "M=!M",
             ],
             VMInstruction::Arithmetic(Arithmetic::Neg),
+        );
+    }
+
+    #[test]
+    fn generate_eq() {
+        assert_instructions(
+            &vec![
+                //SP--, D=RAM[SP], RAM[SP-1]-=D
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
+		"@zero.1", "D;JEQ", "D=-1", "@end.2", "0;JMP",
+		"(zero.1)", "D=0",
+		"(end.2)", "A=M-1", "M=D"
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Eq),
         );
     }
 }
