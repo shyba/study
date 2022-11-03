@@ -189,13 +189,14 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
 
 struct CodeGenerator {
     program_name: String,
-    label_counter: usize
+    label_counter: usize,
 }
 
 impl CodeGenerator {
     pub fn new(program_name: String) -> CodeGenerator {
         CodeGenerator {
-            program_name: program_name, label_counter: 0
+            program_name: program_name,
+            label_counter: 0,
         }
     }
 
@@ -280,12 +281,12 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }));
                     instructions.extend(self.pop_to_r13_pointer())
-                },
+                }
                 Segment::Pointer => {
                     match value {
                         0 => instructions.push(Instruction::Address(3)),
                         1 => instructions.push(Instruction::Address(4)),
-                        _ => panic!("pointer can only be 0 or 1")
+                        _ => panic!("pointer can only be 0 or 1"),
                     }
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(false),
@@ -347,9 +348,9 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                },
-		Arithmetic::Neg => {
-		    instructions.push(Instruction::Address(0));
+                }
+                Arithmetic::Neg => {
+                    instructions.push(Instruction::Address(0));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::DecA(true),
                         jump_op: JumpOp::Nothing,
@@ -360,10 +361,10 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-		},
-		Arithmetic::Eq => instructions.extend(self.true_or_false(JumpOp::Equal)),
-		Arithmetic::Gt => instructions.extend(self.true_or_false(JumpOp::Greater)),
-		Arithmetic::Lt => instructions.extend(self.true_or_false(JumpOp::Lower)),
+                }
+                Arithmetic::Eq => instructions.extend(self.true_or_false(JumpOp::Equal)),
+                Arithmetic::Gt => instructions.extend(self.true_or_false(JumpOp::Greater)),
+                Arithmetic::Lt => instructions.extend(self.true_or_false(JumpOp::Lower)),
                 Arithmetic::And => {
                     instructions.extend(self.pop_to_d());
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -371,7 +372,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                },
+                }
                 Arithmetic::Or => {
                     instructions.extend(self.pop_to_d());
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -379,9 +380,9 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                },
-		Arithmetic::Not => {
-		    instructions.push(Instruction::Address(0));
+                }
+                Arithmetic::Not => {
+                    instructions.push(Instruction::Address(0));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::DecA(true),
                         jump_op: JumpOp::Nothing,
@@ -392,7 +393,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-		},
+                }
             },
             _ => (),
         }
@@ -400,52 +401,52 @@ impl CodeGenerator {
     }
 
     fn true_or_false(&mut self, jump_op: JumpOp) -> Vec<Instruction> {
-	let mut instructions = vec![];
-	instructions.extend(self.pop_to_d());
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::AMinusD(true),
-	    jump_op: JumpOp::Nothing,
-	    destination_op: DestOp::D,
-	}));
-	self.label_counter += 1;
-	let true_label = format!("true.{}", self.label_counter);
-	instructions.push(Instruction::LabeledAddress(true_label.clone()));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::D,
-	    jump_op: jump_op,
-	    destination_op: DestOp::Nothing,
-	}));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::Zero,
-	    jump_op: JumpOp::Nothing,
-	    destination_op: DestOp::D,
-	}));
-	self.label_counter += 1;
-	let end_label = format!("end.{}", self.label_counter);
-	instructions.push(Instruction::LabeledAddress(end_label.clone()));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::Zero,
-	    jump_op: JumpOp::Unconditional,
-	    destination_op: DestOp::Nothing,
-	}));
-	instructions.push(Instruction::Label(true_label.clone()));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::MinusOne,
-	    jump_op: JumpOp::Nothing,
-	    destination_op: DestOp::D,
-	}));
-	instructions.push(Instruction::Label(end_label.clone()));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::DecA(true),
-	    jump_op: JumpOp::Nothing,
-	    destination_op: DestOp::A,
-	}));
-	instructions.push(Instruction::Compute(ComputeFields {
-	    compute_op: ComputeOp::D,
-	    jump_op: JumpOp::Nothing,
-	    destination_op: DestOp::M,
-	}));
-	instructions
+        let mut instructions = vec![];
+        instructions.extend(self.pop_to_d());
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::AMinusD(true),
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::D,
+        }));
+        self.label_counter += 1;
+        let true_label = format!("true.{}", self.label_counter);
+        instructions.push(Instruction::LabeledAddress(true_label.clone()));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::D,
+            jump_op: jump_op,
+            destination_op: DestOp::Nothing,
+        }));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::Zero,
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::D,
+        }));
+        self.label_counter += 1;
+        let end_label = format!("end.{}", self.label_counter);
+        instructions.push(Instruction::LabeledAddress(end_label.clone()));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::Zero,
+            jump_op: JumpOp::Unconditional,
+            destination_op: DestOp::Nothing,
+        }));
+        instructions.push(Instruction::Label(true_label.clone()));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::MinusOne,
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::D,
+        }));
+        instructions.push(Instruction::Label(end_label.clone()));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::DecA(true),
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::A,
+        }));
+        instructions.push(Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::D,
+            jump_op: JumpOp::Nothing,
+            destination_op: DestOp::M,
+        }));
+        instructions
     }
 
     fn pop_to_d(&self) -> Vec<Instruction> {
@@ -979,10 +980,8 @@ mod tests {
     fn generate_eq() {
         assert_instructions(
             &vec![
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
-		"@true.1", "D;JEQ", "D=0", "@end.2", "0;JMP",
-		"(true.1)", "D=-1",
-		"(end.2)", "A=M-1", "M=D"
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JEQ", "D=0",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Eq),
         );
@@ -992,10 +991,8 @@ mod tests {
     fn generate_gt() {
         assert_instructions(
             &vec![
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
-		"@true.1", "D;JGT", "D=0", "@end.2", "0;JMP",
-		"(true.1)", "D=-1",
-		"(end.2)", "A=M-1", "M=D"
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JGT", "D=0",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Gt),
         );
@@ -1005,10 +1002,8 @@ mod tests {
     fn generate_lt() {
         assert_instructions(
             &vec![
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
-		"@true.1", "D;JLT", "D=0", "@end.2", "0;JMP",
-		"(true.1)", "D=-1",
-		"(end.2)", "A=M-1", "M=D"
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D", "@true.1", "D;JLT", "D=0",
+                "@end.2", "0;JMP", "(true.1)", "D=-1", "(end.2)", "A=M-1", "M=D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Lt),
         );
@@ -1017,9 +1012,7 @@ mod tests {
     #[test]
     fn generate_and() {
         assert_instructions(
-            &vec![
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D&M",
-            ],
+            &vec!["@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D&M"],
             VMInstruction::Arithmetic(Arithmetic::And),
         );
     }
@@ -1027,9 +1020,7 @@ mod tests {
     #[test]
     fn generate_or() {
         assert_instructions(
-            &vec![
-                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D|M",
-            ],
+            &vec!["@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D|M"],
             VMInstruction::Arithmetic(Arithmetic::Or),
         );
     }
