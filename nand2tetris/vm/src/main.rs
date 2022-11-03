@@ -364,6 +364,14 @@ impl CodeGenerator {
 		Arithmetic::Eq => instructions.extend(self.true_or_false(JumpOp::Equal)),
 		Arithmetic::Gt => instructions.extend(self.true_or_false(JumpOp::Greater)),
 		Arithmetic::Lt => instructions.extend(self.true_or_false(JumpOp::Lower)),
+                Arithmetic::And => {
+                    instructions.extend(self.pop_to_d());
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DAndA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+                },
                 _ => (),
             },
             _ => (),
@@ -951,7 +959,6 @@ mod tests {
     fn generate_eq() {
         assert_instructions(
             &vec![
-                //SP--, D=RAM[SP], RAM[SP-1]-=D
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
 		"@true.1", "D;JEQ", "D=0", "@end.2", "0;JMP",
 		"(true.1)", "D=-1",
@@ -965,7 +972,6 @@ mod tests {
     fn generate_gt() {
         assert_instructions(
             &vec![
-                //SP--, D=RAM[SP], RAM[SP-1]-=D
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
 		"@true.1", "D;JGT", "D=0", "@end.2", "0;JMP",
 		"(true.1)", "D=-1",
@@ -979,13 +985,22 @@ mod tests {
     fn generate_lt() {
         assert_instructions(
             &vec![
-                //SP--, D=RAM[SP], RAM[SP-1]-=D
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "D=M-D",
 		"@true.1", "D;JLT", "D=0", "@end.2", "0;JMP",
 		"(true.1)", "D=-1",
 		"(end.2)", "A=M-1", "M=D"
             ],
             VMInstruction::Arithmetic(Arithmetic::Lt),
+        );
+    }
+
+    #[test]
+    fn generate_and() {
+        assert_instructions(
+            &vec![
+                "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=D&M",
+            ],
+            VMInstruction::Arithmetic(Arithmetic::And),
         );
     }
 }
