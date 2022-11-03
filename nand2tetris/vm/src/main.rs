@@ -346,7 +346,20 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                }
+                },
+		Arithmetic::Neg => {
+		    instructions.push(Instruction::Address(0));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DecA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }));
+                    instructions.push(Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::NotA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }));
+		},
                 _ => (),
             },
             _ => (),
@@ -867,6 +880,17 @@ mod tests {
                 "@0", "M=M-1", "A=M", "D=M", "@0", "A=M-1", "M=M-D",
             ],
             VMInstruction::Arithmetic(Arithmetic::Sub),
+        );
+    }
+
+    #[test]
+    fn generate_neg() {
+        assert_instructions(
+            &vec![
+                //SP--, D=RAM[SP], RAM[SP-1]-=D
+                "@0", "A=M-1", "M=!M",
+            ],
+            VMInstruction::Arithmetic(Arithmetic::Neg),
         );
     }
 }
