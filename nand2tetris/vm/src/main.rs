@@ -83,9 +83,9 @@ fn try_parse_arithmetic(line: &String) -> Option<VMInstruction> {
 }
 
 fn parse_push(line: String) -> VMInstruction {
-    let words: Vec<&str> = line.split(" ").collect();
+    let words: Vec<&str> = line.trim().split(" ").collect();
     if words.len() != 3 {
-        panic!("Error parsing push. Expected: push <segment> <value>")
+        panic!("Error parsing push. Expected: push <segment> <value>, got:{}", line)
     }
     VMInstruction::Push(
         parse_segment(words[1]),
@@ -375,7 +375,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                }
+                },
                 Arithmetic::Or => {
                     instructions.extend(self.pop_to_d());
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -383,7 +383,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }));
-                }
+                },
                 Arithmetic::Not => {
                     instructions.push(Instruction::Address(0));
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -398,6 +398,35 @@ impl CodeGenerator {
                     }));
                 }
             },
+	    VMInstruction::Label(label) => {
+		let formatted_label = format!("{}.{}", self.program_name, label);
+		instructions.push(Instruction::Label(formatted_label))
+	    },
+	    VMInstruction::IfGoTo(label) => {
+		let formatted_label = format!("{}.{}", self.program_name, label);
+		instructions.push(Instruction::Address(0));
+		instructions.push(Instruction::Compute(ComputeFields {
+		    compute_op: ComputeOp::DecA(true),
+		    jump_op: JumpOp::Nothing,
+		    destination_op: DestOp::M,
+		}));
+		instructions.push(Instruction::Compute(ComputeFields {
+		    compute_op: ComputeOp::A(true),
+		    jump_op: JumpOp::Nothing,
+		    destination_op: DestOp::A,
+		}));
+		instructions.push(Instruction::Compute(ComputeFields {
+		    compute_op: ComputeOp::A(true),
+		    jump_op: JumpOp::Nothing,
+		    destination_op: DestOp::D,
+		}));
+		instructions.push(Instruction::LabeledAddress(formatted_label));
+		instructions.push(Instruction::Compute(ComputeFields {
+		    compute_op: ComputeOp::D,
+		    jump_op: JumpOp::NotEqual,
+		    destination_op: DestOp::Nothing,
+		}));
+	    },
             _ => (),
         }
         instructions
@@ -584,9 +613,16 @@ impl Parser {
     }
     pub fn parse_line(&mut self, line: &String) -> VMInstruction {
         self.line_number += 1;
+	let line = if line.contains("//") && !line.starts_with("//") {
+	    line.split("//").next().unwrap().trim()
+	} else {
+	    line
+	};
+	let line = &String::from(line);
+
         let lower_line = line.trim().to_lowercase();
 
-        if line.len() == 0 || line.contains("//") {
+        if line.len() == 0 || line.starts_with("//") {
             VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
@@ -1068,5 +1104,20 @@ mod tests {
 	let mut parser = Parser::new();
 	let instruction = parser.parse_line(&String::from("if-goto FAIL"));
 	assert_eq!(instruction, VMInstruction::IfGoTo(String::from("FAIL")));
+    }
+
+    #[test]
+    fn generate_label_goto() {
+	let mut parser = Parser::new();
+	let label = parser.parse_line(&String::from("label FAIL"));
+	let conditional = parser.parse_line(&String::from("if-goto FAIL"));
+        assert_instructions(
+            &vec!["(Test.FAIL)"],
+            label,
+        );
+        assert_instructions(
+            &vec!["@0", "M=M-1", "A=M", "D=M", "@Test.FAIL", "D;JNE"],
+            conditional,
+        );
     }
 }
