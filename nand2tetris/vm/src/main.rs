@@ -40,8 +40,8 @@ pub enum VMInstruction {
     Pop(Segment, u16),
     Arithmetic(Arithmetic),
     Label(String),
-    Goto, //?
-    Branch,
+    GoTo(String),
+    IfGoTo(String),
     Function,
     Return,
     Call,
@@ -597,6 +597,9 @@ impl Parser {
         } else if lower_line.starts_with("label") {
 	    let label = line.split(" ").skip(1).next().unwrap();
             VMInstruction::Label(String::from(label))
+        } else if lower_line.starts_with("if-goto") {
+	    let label = line.split(" ").skip(1).next().unwrap();
+            VMInstruction::IfGoTo(String::from(label))
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -1044,9 +1047,16 @@ mod tests {
     }
 
     #[test]
+    fn parse_label() {
+	let mut parser = Parser::new();
+	let instruction = parser.parse_line(&String::from("label ELSE"));
+	assert_eq!(instruction, VMInstruction::Label(String::from("ELSE")));
+    }
+
+    #[test]
     fn parse_if_goto() {
 	let mut parser = Parser::new();
-	let instruction = parser.parse_line(&String::from("label else"));
-	assert_eq!(instruction, VMInstruction::Label(String::from("else")));
+	let instruction = parser.parse_line(&String::from("if-goto FAIL"));
+	assert_eq!(instruction, VMInstruction::IfGoTo(String::from("FAIL")));
     }
 }
