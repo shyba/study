@@ -600,6 +600,9 @@ impl Parser {
         } else if lower_line.starts_with("if-goto") {
 	    let label = line.split(" ").skip(1).next().unwrap();
             VMInstruction::IfGoTo(String::from(label))
+        } else if lower_line.starts_with("goto") {
+	    let label = line.split(" ").skip(1).next().unwrap();
+            VMInstruction::GoTo(String::from(label))
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -1051,6 +1054,13 @@ mod tests {
 	let mut parser = Parser::new();
 	let instruction = parser.parse_line(&String::from("label ELSE"));
 	assert_eq!(instruction, VMInstruction::Label(String::from("ELSE")));
+    }
+
+    #[test]
+    fn parse_goto() {
+	let mut parser = Parser::new();
+	let instruction = parser.parse_line(&String::from("goto FAIL"));
+	assert_eq!(instruction, VMInstruction::GoTo(String::from("FAIL")));
     }
 
     #[test]
