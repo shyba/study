@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Segment {
     Argument,
     Local,
@@ -18,6 +19,7 @@ pub enum Segment {
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum Arithmetic {
     Add,
     Sub,
@@ -31,6 +33,7 @@ pub enum Arithmetic {
 }
 
 #[derive(Debug)]
+#[derive(PartialEq)]
 pub enum VMInstruction {
     Comment(String),
     Push(Segment, u16),
@@ -591,6 +594,9 @@ impl Parser {
             try_parse_arithmetic(line).unwrap()
         } else if lower_line.starts_with("pop") {
             parse_pop(line.to_lowercase())
+        } else if lower_line.starts_with("label") {
+	    let label = line.split(" ").skip(1).next().unwrap();
+            VMInstruction::Label(String::from(label))
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -1035,5 +1041,12 @@ mod tests {
             ],
             VMInstruction::Arithmetic(Arithmetic::Not),
         );
+    }
+
+    #[test]
+    fn parse_if_goto() {
+	let mut parser = Parser::new();
+	let instruction = parser.parse_line(&String::from("label else"));
+	assert_eq!(instruction, VMInstruction::Label(String::from("else")));
     }
 }
