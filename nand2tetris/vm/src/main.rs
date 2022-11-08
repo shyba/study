@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 
 use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Segment {
     Argument,
     Local,
@@ -17,7 +17,7 @@ pub enum Segment {
     Temp,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Arithmetic {
     Add,
     Sub,
@@ -30,7 +30,7 @@ pub enum Arithmetic {
     Not,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum VMInstruction {
     Comment(String),
     Push(Segment, u16),
@@ -64,7 +64,7 @@ pub enum Address {
     Symbol(u8),
 }
 
-fn try_parse_arithmetic(line: &String) -> Option<VMInstruction> {
+fn try_parse_arithmetic(line: &str) -> Option<VMInstruction> {
     match line.trim().to_lowercase().as_str() {
         "add" => Some(VMInstruction::Arithmetic(Arithmetic::Add)),
         "sub" => Some(VMInstruction::Arithmetic(Arithmetic::Sub)),
@@ -80,7 +80,7 @@ fn try_parse_arithmetic(line: &String) -> Option<VMInstruction> {
 }
 
 fn parse_push(line: String) -> VMInstruction {
-    let words: Vec<&str> = line.trim().split(" ").collect();
+    let words: Vec<&str> = line.split_whitespace().collect();
     if words.len() != 3 {
         panic!(
             "Error parsing push. Expected: push <segment> <value>, got:{}",
@@ -89,18 +89,18 @@ fn parse_push(line: String) -> VMInstruction {
     }
     VMInstruction::Push(
         parse_segment(words[1]),
-        u16::from_str_radix(words[2], 10).expect("Error parsing push index"),
+	words[2].parse::<u16>().expect("Error parsing push index"),
     )
 }
 
 fn parse_pop(line: String) -> VMInstruction {
-    let words: Vec<&str> = line.split(" ").collect();
+    let words: Vec<&str> = line.split_whitespace().collect();
     if words.len() != 3 {
         panic!("Error parsing pop. Expected: pop <segment> <value>")
     }
     VMInstruction::Pop(
         parse_segment(words[1]),
-        u16::from_str_radix(words[2], 10).expect("Error parsing pop index"),
+        words[2].parse::<u16>().expect("Error parsing pop index"),
     )
 }
 
@@ -174,7 +174,7 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
     });
     if fields.jump_op == JumpOp::Nothing {
         return result;
-    } else if result.len() > 0 {
+    } else if !result.is_empty() {
         result.push(';');
     }
     result.push_str(match fields.jump_op {
@@ -198,7 +198,7 @@ struct CodeGenerator {
 impl CodeGenerator {
     pub fn new(program_name: String) -> CodeGenerator {
         CodeGenerator {
-            program_name: program_name,
+            program_name,
             label_counter: 0,
         }
     }
@@ -454,7 +454,7 @@ impl CodeGenerator {
         instructions.push(Instruction::LabeledAddress(true_label.clone()));
         instructions.push(Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::D,
-            jump_op: jump_op,
+            jump_op,
             destination_op: DestOp::Nothing,
         }));
         instructions.push(Instruction::Compute(ComputeFields {
@@ -470,13 +470,13 @@ impl CodeGenerator {
             jump_op: JumpOp::Unconditional,
             destination_op: DestOp::Nothing,
         }));
-        instructions.push(Instruction::Label(true_label.clone()));
+        instructions.push(Instruction::Label(true_label));
         instructions.push(Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::MinusOne,
             jump_op: JumpOp::Nothing,
             destination_op: DestOp::D,
         }));
-        instructions.push(Instruction::Label(end_label.clone()));
+        instructions.push(Instruction::Label(end_label));
         instructions.push(Instruction::Address(0));
         instructions.push(Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::DecA(true),
@@ -553,30 +553,29 @@ impl CodeGenerator {
     }
 
     fn gen_push_d(&self) -> Vec<Instruction> {
-        let mut instructions = vec![];
+	vec![
         // @SP
-        instructions.push(Instruction::Address(0));
+        Instruction::Address(0),
         // A=M
-        instructions.push(Instruction::Compute(ComputeFields {
+        Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::A(true),
             jump_op: JumpOp::Nothing,
             destination_op: DestOp::A,
-        }));
+        }),
         // M=D
-        instructions.push(Instruction::Compute(ComputeFields {
+        Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::D,
             jump_op: JumpOp::Nothing,
             destination_op: DestOp::M,
-        }));
+        }),
         // @SP
-        instructions.push(Instruction::Address(0));
+        Instruction::Address(0),
         // M=M+1
-        instructions.push(Instruction::Compute(ComputeFields {
+        Instruction::Compute(ComputeFields {
             compute_op: ComputeOp::IncA(true),
             jump_op: JumpOp::Nothing,
             destination_op: DestOp::M,
-        }));
-        instructions
+        })]
     }
 
     fn pop_to_r13_pointer(&self) -> Vec<Instruction> {
@@ -631,7 +630,7 @@ impl Parser {
 
         let lower_line = line.trim().to_lowercase();
 
-        if line.len() == 0 || line.starts_with("//") {
+        if line.is_empty() || line.starts_with("//") {
             VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
@@ -640,13 +639,13 @@ impl Parser {
         } else if lower_line.starts_with("pop") {
             parse_pop(line.to_lowercase())
         } else if lower_line.starts_with("label") {
-            let label = line.split(" ").skip(1).next().unwrap();
+            let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::Label(String::from(label))
         } else if lower_line.starts_with("if-goto") {
-            let label = line.split(" ").skip(1).next().unwrap();
+            let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::IfGoTo(String::from(label))
         } else if lower_line.starts_with("goto") {
-            let label = line.split(" ").skip(1).next().unwrap();
+            let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::GoTo(String::from(label))
         } else {
             panic!("Unexpected instruction: {}", line)
@@ -677,7 +676,7 @@ fn process_file(file_path: PathBuf) {
         .unwrap()
         .to_str()
         .unwrap()
-        .split(".")
+        .split_whitespace()
         .next()
         .unwrap();
     let mut translator = CodeGenerator::new(file_name.to_string());
@@ -710,7 +709,7 @@ impl<'a> ValidFiles<'a> {
             None => Path::new("."),
         };
         match path.is_file() {
-            true => Self::File(&path),
+            true => Self::File(path),
             false => Self::Directory(Some(fs::read_dir(path).unwrap())),
         }
     }
@@ -722,7 +721,7 @@ impl Iterator for ValidFiles<'_> {
     fn next(&mut self) -> Option<Self::Item> {
         match self {
             Self::File(path) => {
-                let current = path.clone().to_path_buf();
+                let current = path.to_path_buf();
                 *self = Self::Done;
                 Some(current)
             }
