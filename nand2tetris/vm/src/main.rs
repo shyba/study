@@ -402,6 +402,15 @@ impl CodeGenerator {
                 let formatted_label = format!("{}.{}", self.program_name, label);
                 instructions.push(Instruction::Label(formatted_label))
             }
+            VMInstruction::GoTo(label) => {
+                let formatted_label = format!("{}.{}", self.program_name, label);
+                instructions.push(Instruction::LabeledAddress(formatted_label));
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::Zero,
+                    jump_op: JumpOp::Unconditional,
+                    destination_op: DestOp::Nothing,
+                }));
+            }
             VMInstruction::IfGoTo(label) => {
                 let formatted_label = format!("{}.{}", self.program_name, label);
                 instructions.push(Instruction::Address(0));
@@ -1111,10 +1120,12 @@ mod tests {
         let mut parser = Parser::new();
         let label = parser.parse_line(&String::from("label FAIL"));
         let conditional = parser.parse_line(&String::from("if-goto FAIL"));
+        let goto = parser.parse_line(&String::from("goto FAIL"));
         assert_instructions(&vec!["(Test.FAIL)"], label);
         assert_instructions(
             &vec!["@0", "M=M-1", "A=M", "D=M", "@Test.FAIL", "D;JNE"],
             conditional,
         );
+        assert_instructions(&vec!["@Test.FAIL", "0;JMP"], goto);
     }
 }
