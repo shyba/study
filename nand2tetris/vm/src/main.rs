@@ -543,7 +543,7 @@ impl CodeGenerator {
             }
         }
         match segment {
-            Segment::Local => instructions.push(Instruction::Address(1)),
+            Segment::Local => instructions.push(Instruction::LabeledAddress("LCL".to_string())),
             Segment::Argument => instructions.push(Instruction::Address(2)),
             Segment::This => instructions.push(Instruction::Address(3)),
             Segment::That => instructions.push(Instruction::Address(4)),
@@ -788,7 +788,7 @@ mod tests {
             &vec![
                 "@13",   // 13 offset
                 "D=A",   // store offset in D
-                "@1",    // LOCAL base addr
+                "@LCL",  // LOCAL base addr
                 "A=D+M", // sum offset
                 "D=M",   // read D = RAM[LOCAL + offset]
                 "@SP", "A=M", "M=D", "@SP", "M=M+1",
@@ -891,7 +891,7 @@ mod tests {
             &vec![
                 "@2",    // load offset
                 "D=A",   // store offset in D
-                "@1",    // LOCAL base addr
+                "@LCL",  // LOCAL base addr
                 "D=D+M", // sum offset, store address in D
                 "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
