@@ -240,8 +240,8 @@ impl CodeGenerator {
                     Segment::Pointer => {
                         instructions.extend(vec![
                             match value {
-                                0 => Instruction::Address(3), // this
-                                1 => Instruction::Address(4), // that
+                                0 => Instruction::LabeledAddress("THIS".to_string()),
+                                1 => Instruction::LabeledAddress("THAT".to_string()),
                                 _ => panic!("pointer can only be used with 1 and 0"),
                             },
                             Instruction::Compute(ComputeFields {
@@ -287,8 +287,8 @@ impl CodeGenerator {
                 }
                 Segment::Pointer => {
                     match value {
-                        0 => instructions.push(Instruction::Address(3)),
-                        1 => instructions.push(Instruction::Address(4)),
+                        0 => instructions.push(Instruction::LabeledAddress("THIS".to_string())),
+                        1 => instructions.push(Instruction::LabeledAddress("THAT".to_string())),
                         _ => panic!("pointer can only be 0 or 1"),
                     }
                     instructions.push(Instruction::Compute(ComputeFields {
@@ -545,8 +545,8 @@ impl CodeGenerator {
         match segment {
             Segment::Local => instructions.push(Instruction::LabeledAddress("LCL".to_string())),
             Segment::Argument => instructions.push(Instruction::LabeledAddress("ARG".to_string())),
-            Segment::This => instructions.push(Instruction::Address(3)),
-            Segment::That => instructions.push(Instruction::Address(4)),
+            Segment::This => instructions.push(Instruction::LabeledAddress("THIS".to_string())),
+            Segment::That => instructions.push(Instruction::LabeledAddress("THAT".to_string())),
             _ => (),
         }
         instructions
@@ -829,7 +829,7 @@ mod tests {
             &vec![
                 "@19",   // load offset
                 "D=A",   // store offset in D
-                "@3",    // THIS base addr
+                "@THIS", // THIS base addr
                 "A=D+M", // sum offset
                 "D=M",   // read D = RAM[THIS + offset]
                 "@SP", "A=M", "M=D", "@SP", "M=M+1",
@@ -844,7 +844,7 @@ mod tests {
             &vec![
                 "@15",   // load offset
                 "D=A",   // store offset in D
-                "@4",    // THAT base addr
+                "@THAT", // THAT base addr
                 "A=D+M", // sum offset
                 "D=M",   // read D = RAM[THAT + offset]
                 "@SP", "A=M", "M=D", "@SP", "M=M+1",
@@ -857,16 +857,16 @@ mod tests {
     fn generate_push_pointer() {
         assert_instructions(
             &vec![
-                "@3",  // THIS base addr
-                "D=M", // read D = RAM[THIS]
+                "@THIS", // THIS base addr
+                "D=M",   // read D = RAM[THIS]
                 "@SP", "A=M", "M=D", "@SP", "M=M+1",
             ],
             VMInstruction::Push(Segment::Pointer, 0),
         );
         assert_instructions(
             &vec![
-                "@4",  // THIS base addr
-                "D=M", // read D = RAM[THIS]
+                "@THAT", // THIS base addr
+                "D=M",   // read D = RAM[THIS]
                 "@SP", "A=M", "M=D", "@SP", "M=M+1",
             ],
             VMInstruction::Push(Segment::Pointer, 1),
@@ -921,7 +921,7 @@ mod tests {
             &vec![
                 "@10",   // load offset
                 "D=A",   // store offset in D
-                "@3",    // THIS base addr
+                "@THIS", // THIS base addr
                 "D=D+M", // sum offset, store address in D
                 "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
@@ -935,8 +935,8 @@ mod tests {
     fn generate_pop_pointer() {
         assert_instructions(
             &vec![
-                "@3",  // THIS base addr
-                "D=A", // store address in D TODO: OPTIMIZE THAT
+                "@THIS", // THIS base addr
+                "D=A",   // store address in D TODO: OPTIMIZE THAT
                 "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
                 "@R13", "A=M", "M=D", // (*R13) = D
@@ -945,8 +945,8 @@ mod tests {
         );
         assert_instructions(
             &vec![
-                "@4",  // THAT base addr
-                "D=A", // store address in D TODO: OPTIMIZE THAT
+                "@THAT", // THAT base addr
+                "D=A",   // store address in D TODO: OPTIMIZE THAT
                 "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
                 "@R13", "A=M", "M=D", // (*R13) = D
@@ -961,7 +961,7 @@ mod tests {
             &vec![
                 "@44",   // load offset
                 "D=A",   // store offset in D
-                "@4",    // THAT base addr
+                "@THAT", // THAT base addr
                 "D=D+M", // sum offset, store address in D
                 "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
