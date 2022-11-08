@@ -277,7 +277,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
-                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::LabeledAddress("R13".to_string()));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
@@ -296,7 +296,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
-                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::LabeledAddress("R13".to_string()));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
@@ -311,7 +311,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
-                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::LabeledAddress("R13".to_string()));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
@@ -326,7 +326,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }));
-                    instructions.push(Instruction::Address(13));
+                    instructions.push(Instruction::LabeledAddress("R13".to_string()));
                     instructions.push(Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
@@ -597,7 +597,7 @@ impl CodeGenerator {
                 jump_op: JumpOp::Nothing,
                 destination_op: DestOp::D,
             }),
-            Instruction::Address(13),
+            Instruction::LabeledAddress("R13".to_string()),
             Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::A(true),
                 jump_op: JumpOp::Nothing,
@@ -893,9 +893,9 @@ mod tests {
                 "D=A",   // store offset in D
                 "@1",    // LOCAL base addr
                 "D=D+M", // sum offset, store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Local, 2),
         );
@@ -907,9 +907,9 @@ mod tests {
             &vec![
                 "@Test.3", // load offset
                 "D=A",     // store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Static, 3),
         );
@@ -923,9 +923,9 @@ mod tests {
                 "D=A",   // store offset in D
                 "@3",    // THIS base addr
                 "D=D+M", // sum offset, store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::This, 10),
         );
@@ -937,9 +937,9 @@ mod tests {
             &vec![
                 "@3",  // THIS base addr
                 "D=A", // store address in D TODO: OPTIMIZE THAT
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Pointer, 0),
         );
@@ -947,9 +947,9 @@ mod tests {
             &vec![
                 "@4",  // THAT base addr
                 "D=A", // store address in D TODO: OPTIMIZE THAT
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Pointer, 1),
         );
@@ -963,9 +963,9 @@ mod tests {
                 "D=A",   // store offset in D
                 "@4",    // THAT base addr
                 "D=D+M", // sum offset, store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::That, 44),
         );
@@ -977,9 +977,9 @@ mod tests {
             &vec![
                 "@12", // TEMP (5 + 7)
                 "D=A", // store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Temp, 7),
         );
@@ -993,9 +993,9 @@ mod tests {
                 "D=A",   // store offset in D
                 "@2",    // argument base addr
                 "D=D+M", // sum offset, store address in D
-                "@13", "M=D", // R13=D temporarly
+                "@R13", "M=D", // R13=D temporarly
                 "@SP", "M=M-1", "A=M", "D=M", // D = RAM[SP], SP-=1
-                "@13", "A=M", "M=D", // (*R13) = D
+                "@R13", "A=M", "M=D", // (*R13) = D
             ],
             VMInstruction::Pop(Segment::Argument, 9),
         );
