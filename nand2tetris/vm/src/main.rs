@@ -41,7 +41,7 @@ pub enum VMInstruction {
     IfGoTo(String),
     Function(String, u16),
     Return,
-    Call,
+    Call(String, u16),
 }
 
 pub enum Address {
@@ -653,6 +653,11 @@ impl Parser {
             let label = &pieces.next().unwrap();
             let locals = &pieces.next().unwrap();
             VMInstruction::Function(label.to_string(), locals.parse().unwrap())
+        } else if lower_line.starts_with("call") {
+            let mut pieces = line.split_whitespace().skip(1);
+            let label = &pieces.next().unwrap();
+            let arguments = &pieces.next().unwrap();
+            VMInstruction::Call(label.to_string(), arguments.parse().unwrap())
 	} else if lower_line.starts_with("return") {
 	    VMInstruction::Return
         } else {
@@ -1129,6 +1134,8 @@ mod tests {
         assert_eq!(return_instruction, VMInstruction::Return);
         let function_instruction = parser.parse_line(&String::from("function foo 3"));
         assert_eq!(function_instruction, VMInstruction::Function("foo".to_string(), 3));
+        let call_instruction = parser.parse_line(&String::from("call foo 2"));
+        assert_eq!(call_instruction, VMInstruction::Call("foo".to_string(), 2));
     }
 
     #[test]
