@@ -39,7 +39,7 @@ pub enum VMInstruction {
     Label(String),
     GoTo(String),
     IfGoTo(String),
-    Function,
+    Function(String, u16),
     Return,
     Call,
 }
@@ -648,6 +648,8 @@ impl Parser {
         } else if lower_line.starts_with("goto") {
             let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::GoTo(String::from(label))
+	} else if lower_line.starts_with("return") {
+	    VMInstruction::Return
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -1113,6 +1115,13 @@ mod tests {
         let mut parser = Parser::new();
         let instruction = parser.parse_line(&String::from("if-goto FAIL"));
         assert_eq!(instruction, VMInstruction::IfGoTo(String::from("FAIL")));
+    }
+
+    #[test]
+    fn parse_return() {
+        let mut parser = Parser::new();
+        let instruction = parser.parse_line(&String::from("return"));
+        assert_eq!(instruction, VMInstruction::Return);
     }
 
     #[test]
