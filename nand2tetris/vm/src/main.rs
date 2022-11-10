@@ -31,6 +31,13 @@ pub enum Arithmetic {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct VMFunctionCall {
+    target: String,
+    from: String,
+    arguments: u16,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum VMInstruction {
     Comment(String),
     Push(Segment, u16),
@@ -41,7 +48,7 @@ pub enum VMInstruction {
     IfGoTo(String),
     Function(String, u16),
     Return,
-    Call(String, u16),
+    Call(VMFunctionCall),
 }
 
 pub enum Address {
@@ -614,11 +621,15 @@ impl CodeGenerator {
 
 struct Parser {
     line_number: u16,
+    current_function: Option<String>,
 }
 
 impl Parser {
     pub fn new() -> Self {
-        Self { line_number: 0 }
+        Self {
+            line_number: 0,
+            current_function: None,
+        }
     }
     pub fn parse_line(&mut self, line: &String) -> VMInstruction {
         self.line_number += 1;
@@ -652,14 +663,23 @@ impl Parser {
             let mut pieces = line.split_whitespace().skip(1);
             let label = &pieces.next().unwrap();
             let locals = &pieces.next().unwrap();
+            self.current_function = Some(label.to_string());
             VMInstruction::Function(label.to_string(), locals.parse().unwrap())
         } else if lower_line.starts_with("call") {
             let mut pieces = line.split_whitespace().skip(1);
             let label = &pieces.next().unwrap();
             let arguments = &pieces.next().unwrap();
-            VMInstruction::Call(label.to_string(), arguments.parse().unwrap())
-	} else if lower_line.starts_with("return") {
-	    VMInstruction::Return
+            VMInstruction::Call(VMFunctionCall {
+                from: self
+                    .current_function
+                    .as_ref()
+                    .expect("call not in a function!")
+                    .clone(),
+                target: label.to_string(),
+                arguments: arguments.parse().unwrap(),
+            })
+        } else if lower_line.starts_with("return") {
+            VMInstruction::Return
         } else {
             panic!("Unexpected instruction: {}", line)
         }
@@ -1133,9 +1153,19 @@ mod tests {
         let return_instruction = parser.parse_line(&String::from("return"));
         assert_eq!(return_instruction, VMInstruction::Return);
         let function_instruction = parser.parse_line(&String::from("function foo 3"));
-        assert_eq!(function_instruction, VMInstruction::Function("foo".to_string(), 3));
-        let call_instruction = parser.parse_line(&String::from("call foo 2"));
-        assert_eq!(call_instruction, VMInstruction::Call("foo".to_string(), 2));
+        assert_eq!(
+            function_instruction,
+            VMInstruction::Function("foo".to_string(), 3)
+        );
+        let call_instruction = parser.parse_line(&String::from("call bar 2"));
+        assert_eq!(
+            call_instruction,
+            VMInstruction::Call(VMFunctionCall {
+                from: "foo".to_string(),
+                target: "bar".to_string(),
+                arguments: 2
+            })
+        );
     }
 
     #[test]
