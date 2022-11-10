@@ -443,6 +443,48 @@ impl CodeGenerator {
                     destination_op: DestOp::Nothing,
                 }));
             }
+            VMInstruction::Function(function_name, number_of_locals) => {
+                // todo: this can be optimized easily
+                let formatted_label = format!("{}.{}", self.program_name, function_name);
+                instructions.extend(vec![
+                    Instruction::Label(formatted_label),
+                    Instruction::Address(*number_of_locals),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(false),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::LabeledAddress("SP".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                ]);
+                for _ in 0..*number_of_locals {
+                    instructions.extend(vec![
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::Zero,
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::M,
+                        }),
+                        Instruction::Compute(ComputeFields {
+                            // last one always redundant
+                            compute_op: ComputeOp::IncA(false),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::A,
+                        }),
+                    ]);
+                }
+                instructions.extend(vec![
+                    Instruction::LabeledAddress("SP".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DPlusA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                ]);
+            }
             _ => (),
         }
         instructions
@@ -798,7 +840,7 @@ mod tests {
         let smallest = expected.len().min(instructions.len());
         for index in 0..smallest {
             let str_instruction = generate_instruction(&instructions[index]);
-            assert_eq!(expected[index], str_instruction);
+            assert_eq!(expected[index], str_instruction, "index = {}", index);
         }
         assert_eq!(expected.len(), instructions.len());
     }
@@ -1148,7 +1190,7 @@ mod tests {
     }
 
     #[test]
-    fn parse_return_function() {
+    fn parse_and_generate_function_call_with_return() {
         let mut parser = Parser::new();
         let return_instruction = parser.parse_line(&String::from("return"));
         assert_eq!(return_instruction, VMInstruction::Return);
@@ -1165,6 +1207,24 @@ mod tests {
                 target: "bar".to_string(),
                 arguments: 2
             })
+        );
+        assert_instructions(
+            &vec![
+                "(Test.foo)", // file_name.function_name
+                "@3",
+                "D=A", // D = 3 (number of local variables)
+                "@SP",
+                "A=M",
+                "M=0",
+                "A=A+1",
+                "M=0",
+                "A=A+1",
+                "M=0",
+                "A=A+1",
+                "@SP",
+                "M=D+M", // push 0 D times
+            ],
+            function_instruction,
         );
     }
 
