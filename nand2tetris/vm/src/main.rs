@@ -648,6 +648,11 @@ impl Parser {
         } else if lower_line.starts_with("goto") {
             let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::GoTo(String::from(label))
+        } else if lower_line.starts_with("function") {
+            let mut pieces = line.split_whitespace().skip(1);
+            let label = &pieces.next().unwrap();
+            let locals = &pieces.next().unwrap();
+            VMInstruction::Function(label.to_string(), locals.parse().unwrap())
 	} else if lower_line.starts_with("return") {
 	    VMInstruction::Return
         } else {
@@ -1118,10 +1123,12 @@ mod tests {
     }
 
     #[test]
-    fn parse_return() {
+    fn parse_return_function() {
         let mut parser = Parser::new();
-        let instruction = parser.parse_line(&String::from("return"));
-        assert_eq!(instruction, VMInstruction::Return);
+        let return_instruction = parser.parse_line(&String::from("return"));
+        assert_eq!(return_instruction, VMInstruction::Return);
+        let function_instruction = parser.parse_line(&String::from("function foo 3"));
+        assert_eq!(function_instruction, VMInstruction::Function("foo".to_string(), 3));
     }
 
     #[test]
