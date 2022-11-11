@@ -405,13 +405,9 @@ impl CodeGenerator {
                     }));
                 }
             },
-            VMInstruction::Label(label) => {
-                let formatted_label = format!("{}.{}", self.program_name, label);
-                instructions.push(Instruction::Label(formatted_label))
-            }
+            VMInstruction::Label(label) => instructions.push(Instruction::Label(label.to_string())),
             VMInstruction::GoTo(label) => {
-                let formatted_label = format!("{}.{}", self.program_name, label);
-                instructions.push(Instruction::LabeledAddress(formatted_label));
+                instructions.push(Instruction::LabeledAddress(label.to_string()));
                 instructions.push(Instruction::Compute(ComputeFields {
                     compute_op: ComputeOp::Zero,
                     jump_op: JumpOp::Unconditional,
@@ -419,7 +415,6 @@ impl CodeGenerator {
                 }));
             }
             VMInstruction::IfGoTo(label) => {
-                let formatted_label = format!("{}.{}", self.program_name, label);
                 instructions.push(Instruction::LabeledAddress("SP".to_string()));
                 instructions.push(Instruction::Compute(ComputeFields {
                     compute_op: ComputeOp::DecA(true),
@@ -436,7 +431,7 @@ impl CodeGenerator {
                     jump_op: JumpOp::Nothing,
                     destination_op: DestOp::D,
                 }));
-                instructions.push(Instruction::LabeledAddress(formatted_label));
+                instructions.push(Instruction::LabeledAddress(label.to_string()));
                 instructions.push(Instruction::Compute(ComputeFields {
                     compute_op: ComputeOp::D,
                     jump_op: JumpOp::NotEqual,
@@ -445,9 +440,8 @@ impl CodeGenerator {
             }
             VMInstruction::Function(function_name, number_of_locals) => {
                 // todo: this can be optimized easily
-                let formatted_label = format!("{}.{}", self.program_name, function_name);
                 instructions.extend(vec![
-                    Instruction::Label(formatted_label),
+                    Instruction::Label(function_name.to_string()),
                     Instruction::Address(*number_of_locals),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(false),
@@ -487,10 +481,7 @@ impl CodeGenerator {
             }
             VMInstruction::Call(call_data) => {
                 self.label_counter += 1;
-                let formatted_return = format!(
-                    "{}.{}$ret{}",
-                    self.program_name, call_data.from, self.label_counter
-                );
+                let formatted_return = format!("{}$ret{}", call_data.from, self.label_counter);
                 instructions.extend(vec![
                     Instruction::LabeledAddress(formatted_return.clone()),
                     Instruction::Compute(ComputeFields {
@@ -512,7 +503,6 @@ impl CodeGenerator {
                     instructions.extend(self.push_d());
                 }
                 let offset = call_data.arguments + 5;
-                let formatted_target = format!("{}.{}", self.program_name, call_data.target);
                 instructions.extend(vec![
                     Instruction::LabeledAddress("SP".to_string()),
                     Instruction::Compute(ComputeFields {
@@ -538,7 +528,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
-                    Instruction::LabeledAddress(formatted_target),
+                    Instruction::LabeledAddress(call_data.target.clone()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::Zero,
                         jump_op: JumpOp::Unconditional,
@@ -1366,23 +1356,23 @@ mod tests {
         let mut parser = Parser::new();
         let return_instruction = parser.parse_line(&String::from("return"));
         assert_eq!(return_instruction, VMInstruction::Return);
-        let function_instruction = parser.parse_line(&String::from("function foo 3"));
+        let function_instruction = parser.parse_line(&String::from("function Thing.foo 3"));
         assert_eq!(
             function_instruction,
-            VMInstruction::Function("foo".to_string(), 3)
+            VMInstruction::Function("Thing.foo".to_string(), 3)
         );
-        let call_instruction = parser.parse_line(&String::from("call bar 2"));
+        let call_instruction = parser.parse_line(&String::from("call AnotherThing.bar 2"));
         assert_eq!(
             call_instruction,
             VMInstruction::Call(VMFunctionCall {
-                from: "foo".to_string(),
-                target: "bar".to_string(),
+                from: "Thing.foo".to_string(),
+                target: "AnotherThing.bar".to_string(),
                 arguments: 2
             })
         );
         assert_instructions(
             &vec![
-                "(Test.foo)", // file_name.function_name
+                "(Thing.foo)", // file_name.function_name
                 "@3",
                 "D=A", // D = 3 (number of local variables)
                 "@SP",
@@ -1400,8 +1390,8 @@ mod tests {
         );
         assert_instructions(
             &vec![
-                "@Test.foo$ret1", // file_name.function_name$ret<1..>
-                "D=A",            // D = return label address
+                "@Thing.foo$ret1", // file_name.function_name$ret<1..>
+                "D=A",             // D = return label address
                 "@SP",
                 "M=M+1",
                 "A=M-1",
@@ -1438,9 +1428,9 @@ mod tests {
                 "D=D-A",
                 "@ARG",
                 "M=D", // ARG = SP - 7
-                "@Test.bar",
+                "@AnotherThing.bar",
                 "0;JMP",
-                "(Test.foo$ret1)", // return label
+                "(Thing.foo$ret1)", // return label
             ],
             call_instruction,
         );
@@ -1462,14 +1452,14 @@ mod tests {
     #[test]
     fn generate_label_goto() {
         let mut parser = Parser::new();
-        let label = parser.parse_line(&String::from("label FAIL"));
-        let conditional = parser.parse_line(&String::from("if-goto FAIL"));
-        let goto = parser.parse_line(&String::from("goto FAIL"));
-        assert_instructions(&vec!["(Test.FAIL)"], label);
+        let label = parser.parse_line(&String::from("label Program.FAIL"));
+        let conditional = parser.parse_line(&String::from("if-goto Program.FAIL"));
+        let goto = parser.parse_line(&String::from("goto Program.FAIL"));
+        assert_instructions(&vec!["(Program.FAIL)"], label);
         assert_instructions(
-            &vec!["@SP", "M=M-1", "A=M", "D=M", "@Test.FAIL", "D;JNE"],
+            &vec!["@SP", "M=M-1", "A=M", "D=M", "@Program.FAIL", "D;JNE"],
             conditional,
         );
-        assert_instructions(&vec!["@Test.FAIL", "0;JMP"], goto);
+        assert_instructions(&vec!["@Program.FAIL", "0;JMP"], goto);
     }
 }
