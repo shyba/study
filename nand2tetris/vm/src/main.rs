@@ -484,10 +484,91 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }),
                 ]);
-            }
+            },
+	    VMInstruction::Call(call_data) => {
+		self.label_counter += 1;
+		let formatted_return = format!(
+		    "{}.{}$ret{}", self.program_name, call_data.from, self.label_counter);
+		instructions.extend(vec![
+		    Instruction::LabeledAddress(formatted_return.clone()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(false),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+		]);
+		instructions.extend(self.push_d());
+		for segment in ["LCL", "ARG", "THIS", "THAT"] {
+		    instructions.extend(vec![
+			Instruction::LabeledAddress(segment.to_string()),
+			Instruction::Compute(ComputeFields {
+			    compute_op: ComputeOp::A(true),
+			    jump_op: JumpOp::Nothing,
+			    destination_op: DestOp::D,
+			}),
+		    ]);
+		    instructions.extend(self.push_d());
+		}
+		let offset = call_data.arguments + 5;
+		let formatted_target = format!("{}.{}", self.program_name, call_data.target);
+		instructions.extend(vec![
+		    Instruction::LabeledAddress("SP".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+		    Instruction::LabeledAddress("LCL".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+		    Instruction::Address(offset),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DMinusA(false),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+		    Instruction::LabeledAddress("ARG".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+		    Instruction::LabeledAddress(formatted_target),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::Zero,
+                        jump_op: JumpOp::Unconditional,
+                        destination_op: DestOp::Nothing,
+                    }),
+		    Instruction::Label(formatted_return)
+		]);
+	    }
             _ => (),
         }
         instructions
+    }
+
+    fn push_d(&self) -> Vec<Instruction> {
+	vec![
+	    Instruction::LabeledAddress("SP".to_string()),
+	    Instruction::Compute(ComputeFields {
+		compute_op: ComputeOp::IncA(true),
+		jump_op: JumpOp::Nothing,
+		destination_op: DestOp::M,
+	    }),
+	    Instruction::Compute(ComputeFields {
+		compute_op: ComputeOp::DecA(true),
+		jump_op: JumpOp::Nothing,
+		destination_op: DestOp::A,
+	    }),
+	    Instruction::Compute(ComputeFields {
+		compute_op: ComputeOp::D,
+		jump_op: JumpOp::Nothing,
+		destination_op: DestOp::M,
+	    }),
+	]
     }
 
     fn true_or_false(&mut self, jump_op: JumpOp) -> Vec<Instruction> {
@@ -1225,6 +1306,52 @@ mod tests {
                 "M=D+M", // push 0 D times
             ],
             function_instruction,
+        );
+        assert_instructions(
+            &vec![
+                "@Test.foo$ret1", // file_name.function_name$ret<1..>
+                "D=A", // D = return label address
+                "@SP",
+		"M=M+1",
+                "A=M-1",
+                "M=D", // push D
+		"@LCL",
+		"D=M", // D=LCL
+                "@SP",
+		"M=M+1",
+                "A=M-1",
+                "M=D", // push D
+		"@ARG",
+		"D=M", // D=ARG
+                "@SP",
+		"M=M+1",
+                "A=M-1",
+                "M=D", // push ARG
+		"@THIS",
+		"D=M", // D=THIS
+                "@SP",
+		"M=M+1",
+                "A=M-1",
+                "M=D", // push THIS
+		"@THAT",
+		"D=M", // D=THAT
+                "@SP",
+		"M=M+1",
+                "A=M-1",
+                "M=D", // push THAT
+		"@SP",
+		"D=M",
+		"@LCL",
+		"M=D", // LCL = SP
+		"@7", // 5 + arguments = 7, at compile time
+		"D=D-A",
+		"@ARG",
+		"M=D", // ARG = SP - 7
+		"@Test.bar",
+		"0;JMP",
+                "(Test.foo$ret1)", // return label
+            ],
+            call_instruction,
         );
     }
 
