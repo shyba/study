@@ -484,91 +484,182 @@ impl CodeGenerator {
                         destination_op: DestOp::M,
                     }),
                 ]);
-            },
-	    VMInstruction::Call(call_data) => {
-		self.label_counter += 1;
-		let formatted_return = format!(
-		    "{}.{}$ret{}", self.program_name, call_data.from, self.label_counter);
-		instructions.extend(vec![
-		    Instruction::LabeledAddress(formatted_return.clone()),
+            }
+            VMInstruction::Call(call_data) => {
+                self.label_counter += 1;
+                let formatted_return = format!(
+                    "{}.{}$ret{}",
+                    self.program_name, call_data.from, self.label_counter
+                );
+                instructions.extend(vec![
+                    Instruction::LabeledAddress(formatted_return.clone()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(false),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }),
-		]);
-		instructions.extend(self.push_d());
-		for segment in ["LCL", "ARG", "THIS", "THAT"] {
-		    instructions.extend(vec![
-			Instruction::LabeledAddress(segment.to_string()),
-			Instruction::Compute(ComputeFields {
-			    compute_op: ComputeOp::A(true),
-			    jump_op: JumpOp::Nothing,
-			    destination_op: DestOp::D,
-			}),
-		    ]);
-		    instructions.extend(self.push_d());
-		}
-		let offset = call_data.arguments + 5;
-		let formatted_target = format!("{}.{}", self.program_name, call_data.target);
-		instructions.extend(vec![
-		    Instruction::LabeledAddress("SP".to_string()),
+                ]);
+                instructions.extend(self.push_d());
+                for segment in ["LCL", "ARG", "THIS", "THAT"] {
+                    instructions.extend(vec![
+                        Instruction::LabeledAddress(segment.to_string()),
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }),
+                    ]);
+                    instructions.extend(self.push_d());
+                }
+                let offset = call_data.arguments + 5;
+                let formatted_target = format!("{}.{}", self.program_name, call_data.target);
+                instructions.extend(vec![
+                    Instruction::LabeledAddress("SP".to_string()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(true),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }),
-		    Instruction::LabeledAddress("LCL".to_string()),
+                    Instruction::LabeledAddress("LCL".to_string()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
-		    Instruction::Address(offset),
+                    Instruction::Address(offset),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::DMinusA(false),
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::D,
                     }),
-		    Instruction::LabeledAddress("ARG".to_string()),
+                    Instruction::LabeledAddress("ARG".to_string()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::D,
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
-		    Instruction::LabeledAddress(formatted_target),
+                    Instruction::LabeledAddress(formatted_target),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::Zero,
                         jump_op: JumpOp::Unconditional,
                         destination_op: DestOp::Nothing,
                     }),
-		    Instruction::Label(formatted_return)
-		]);
-	    }
-            _ => (),
+                    Instruction::Label(formatted_return),
+                ]);
+            }
+            VMInstruction::Return => {
+                instructions.extend(vec![
+                    Instruction::LabeledAddress("LCL".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::LabeledAddress("R13".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                    Instruction::LabeledAddress("SP".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::DecA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::LabeledAddress("ARG".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+                    // SP = ARG+1
+                    Instruction::LabeledAddress("ARG".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::IncA(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                ]);
+                instructions.extend(self.assign_d_to_segment_memory("SP".to_string()));
+                let dec_r13_to_d = || {
+                    vec![
+                        Instruction::LabeledAddress("R13".to_string()),
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::DecA(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::AM,
+                        }),
+                        Instruction::Compute(ComputeFields {
+                            compute_op: ComputeOp::A(true),
+                            jump_op: JumpOp::Nothing,
+                            destination_op: DestOp::D,
+                        }),
+                    ]
+                };
+                for segment_name in ["THAT", "THIS", "ARG", "LCL"] {
+                    // segment = *(--R13)
+                    instructions.extend(dec_r13_to_d());
+                    instructions.extend(self.assign_d_to_segment_memory(segment_name.to_string()));
+                }
+                // goto *(--R13) == crazy hack ahead == jump to D
+                instructions.extend(dec_r13_to_d());
+                instructions.push(Instruction::Compute(ComputeFields {
+                    compute_op: ComputeOp::D,
+                    jump_op: JumpOp::Unconditional,
+                    destination_op: DestOp::A,
+                }));
+            }
+            VMInstruction::Comment(_) => (),
         }
         instructions
     }
 
+    fn assign_d_to_segment_memory(&self, segment_name: String) -> Vec<Instruction> {
+        vec![
+            Instruction::LabeledAddress(segment_name),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::D,
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+        ]
+    }
+
     fn push_d(&self) -> Vec<Instruction> {
-	vec![
-	    Instruction::LabeledAddress("SP".to_string()),
-	    Instruction::Compute(ComputeFields {
-		compute_op: ComputeOp::IncA(true),
-		jump_op: JumpOp::Nothing,
-		destination_op: DestOp::M,
-	    }),
-	    Instruction::Compute(ComputeFields {
-		compute_op: ComputeOp::DecA(true),
-		jump_op: JumpOp::Nothing,
-		destination_op: DestOp::A,
-	    }),
-	    Instruction::Compute(ComputeFields {
-		compute_op: ComputeOp::D,
-		jump_op: JumpOp::Nothing,
-		destination_op: DestOp::M,
-	    }),
-	]
+        vec![
+            Instruction::LabeledAddress("SP".to_string()),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::IncA(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::DecA(true),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::A,
+            }),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::D,
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+        ]
     }
 
     fn true_or_false(&mut self, jump_op: JumpOp) -> Vec<Instruction> {
@@ -1310,48 +1401,61 @@ mod tests {
         assert_instructions(
             &vec![
                 "@Test.foo$ret1", // file_name.function_name$ret<1..>
-                "D=A", // D = return label address
+                "D=A",            // D = return label address
                 "@SP",
-		"M=M+1",
+                "M=M+1",
                 "A=M-1",
                 "M=D", // push D
-		"@LCL",
-		"D=M", // D=LCL
+                "@LCL",
+                "D=M", // D=LCL
                 "@SP",
-		"M=M+1",
+                "M=M+1",
                 "A=M-1",
                 "M=D", // push D
-		"@ARG",
-		"D=M", // D=ARG
+                "@ARG",
+                "D=M", // D=ARG
                 "@SP",
-		"M=M+1",
+                "M=M+1",
                 "A=M-1",
                 "M=D", // push ARG
-		"@THIS",
-		"D=M", // D=THIS
+                "@THIS",
+                "D=M", // D=THIS
                 "@SP",
-		"M=M+1",
+                "M=M+1",
                 "A=M-1",
                 "M=D", // push THIS
-		"@THAT",
-		"D=M", // D=THAT
+                "@THAT",
+                "D=M", // D=THAT
                 "@SP",
-		"M=M+1",
+                "M=M+1",
                 "A=M-1",
                 "M=D", // push THAT
-		"@SP",
-		"D=M",
-		"@LCL",
-		"M=D", // LCL = SP
-		"@7", // 5 + arguments = 7, at compile time
-		"D=D-A",
-		"@ARG",
-		"M=D", // ARG = SP - 7
-		"@Test.bar",
-		"0;JMP",
+                "@SP",
+                "D=M",
+                "@LCL",
+                "M=D", // LCL = SP
+                "@7",  // 5 + arguments = 7, at compile time
+                "D=D-A",
+                "@ARG",
+                "M=D", // ARG = SP - 7
+                "@Test.bar",
+                "0;JMP",
                 "(Test.foo$ret1)", // return label
             ],
             call_instruction,
+        );
+        assert_instructions(
+            &vec![
+                "@LCL", "D=M", "@R13", "M=D", // R13 = LCL
+                "@SP", "M=M-1", "A=M", "D=M", "@ARG", "A=M", "M=D", // *ARG = pop()
+                "@ARG", "D=M+1", "@SP", "M=D", // SP = ARG+1
+                "@R13", "AM=M-1", "D=M", "@THAT", "M=D", // THAT = *(--R13) == R13-1
+                "@R13", "AM=M-1", "D=M", "@THIS", "M=D", // THIS = *(--R13) == R13-2
+                "@R13", "AM=M-1", "D=M", "@ARG", "M=D", // ARG = *(--R13) == R13-3
+                "@R13", "AM=M-1", "D=M", "@LCL", "M=D", // LCL = *(--R13) == R13-4
+                "@R13", "AM=M-1", "D=M", "A=D;JMP", // goto *(--R13) == R13-5
+            ],
+            return_instruction,
         );
     }
 
