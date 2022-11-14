@@ -551,6 +551,38 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
+		    // "@5", "D=A", "@R13", "D=M-D", "@R14", "M=D", // R14 = R13 - 5
+		    // "@5", "D=A", "@R13", "D=M-D", "A=D", "A=M", "D=M", "@R14", "M=D", // R14 = R13 - 5
+		    // "@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
+                    Instruction::Address(5),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(false),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::LabeledAddress("R13".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::AMinusD(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::A,
+                    }),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::A(true),
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::D,
+                    }),
+                    Instruction::LabeledAddress("R14".to_string()),
+                    Instruction::Compute(ComputeFields {
+                        compute_op: ComputeOp::D,
+                        jump_op: JumpOp::Nothing,
+                        destination_op: DestOp::M,
+                    }),
+		    // ..
                     Instruction::LabeledAddress("SP".to_string()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::DecA(true),
@@ -607,10 +639,10 @@ impl CodeGenerator {
                     instructions.extend(dec_r13_to_d());
                     instructions.extend(self.assign_d_to_segment_memory(segment_name.to_string()));
                 }
-                // goto *(--R13) == crazy hack ahead == jump to D
-                instructions.extend(dec_r13_to_d());
+                // "@R14", "A=M;JMP", // goto *R14
+                instructions.push(Instruction::LabeledAddress("R14".to_string()));
                 instructions.push(Instruction::Compute(ComputeFields {
-                    compute_op: ComputeOp::D,
+                    compute_op: ComputeOp::A(true),
                     jump_op: JumpOp::Unconditional,
                     destination_op: DestOp::A,
                 }));
@@ -823,6 +855,49 @@ impl CodeGenerator {
     }
 }
 
+fn write_boot(output_file: &mut std::fs::File) {
+    println!("BOOT");
+    let mut instructions = vec![];
+    let values = vec![
+        ("SP", 261),
+        ("LCL", 261),
+        ("ARG", 256),
+        ("THIS", 10_002),
+        ("THAT", 10_003),
+    ];
+    for (label, value) in values {
+        instructions.extend(vec![
+            Instruction::Address(value),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::A(false),
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::D,
+            }),
+            Instruction::LabeledAddress(label.to_string()),
+            Instruction::Compute(ComputeFields {
+                compute_op: ComputeOp::D,
+                jump_op: JumpOp::Nothing,
+                destination_op: DestOp::M,
+            }),
+        ]);
+    }
+
+    instructions.extend(vec![
+        Instruction::LabeledAddress("Sys.init".to_string()),
+        Instruction::Compute(ComputeFields {
+            compute_op: ComputeOp::Zero,
+            jump_op: JumpOp::Unconditional,
+            destination_op: DestOp::Nothing,
+        }),
+    ]);
+    for instruction in instructions {
+        dbg!(&instruction);
+        let string_instruction = generate_instruction(&instruction);
+        dbg!(&string_instruction);
+        writeln!(output_file, "{}", &string_instruction).unwrap();
+    }
+}
+
 struct Parser {
     line_number: u16,
     current_function: Option<String>,
@@ -893,18 +968,50 @@ impl Parser {
 fn main() {
     if std::env::args().len() > 1 {
         for argument in std::env::args().skip(1) {
-            for file_path in ValidFiles::new(Some(&argument)) {
-                process_file(file_path);
-            }
+            process(&argument);
         }
     } else {
         for file_path in ValidFiles::new(None) {
-            process_file(file_path);
+            process_single_file(file_path);
         }
     }
 }
 
-fn process_file(file_path: PathBuf) {
+fn process(argument: &String) {
+    let path = Path::new(argument);
+    match path.is_file() {
+        true => process_single_file(path.to_path_buf()),
+        false => process_directory(path),
+    }
+}
+
+fn process_directory(path: &Path) {
+    let directory_name = path.file_name().unwrap().to_str().unwrap();
+    let mut translator = CodeGenerator::new(directory_name.to_string());
+    let output_file_name = format!("{}.asm", directory_name);
+    let output_file_path = path.join(Path::new(&output_file_name));
+    let mut output_file =
+        std::fs::File::create(&output_file_path).expect("Error opening output file");
+    write_boot(&mut output_file);
+
+    for file_path in ValidFiles::new(Some(&path.to_str().unwrap().to_string())) {
+        let file = std::fs::File::open(&file_path).expect("Error opening input file");
+        let mut parser = Parser::new();
+        for line in std::io::BufReader::new(file).lines() {
+	    let line = &line.expect("IO error reading line.");
+            let parsed_line = parser.parse_line(&line);
+            dbg!(&parsed_line);
+            for instruction in translator.translate(&parsed_line) {
+                dbg!(&instruction);
+                let string_instruction = generate_instruction(&instruction);
+                dbg!(&string_instruction);
+                writeln!(output_file, "{} // {}", &string_instruction, &line).unwrap();
+            }
+        }
+    }
+}
+
+fn process_single_file(file_path: PathBuf) {
     println!("Processing file: {:?}", file_path);
     let file = std::fs::File::open(&file_path).expect("Error opening input file");
     let mut parser = Parser::new();
@@ -1437,13 +1544,14 @@ mod tests {
         assert_instructions(
             &vec![
                 "@LCL", "D=M", "@R13", "M=D", // R13 = LCL
+		"@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
                 "@SP", "M=M-1", "A=M", "D=M", "@ARG", "A=M", "M=D", // *ARG = pop()
                 "@ARG", "D=M+1", "@SP", "M=D", // SP = ARG+1
                 "@R13", "AM=M-1", "D=M", "@THAT", "M=D", // THAT = *(--R13) == R13-1
                 "@R13", "AM=M-1", "D=M", "@THIS", "M=D", // THIS = *(--R13) == R13-2
                 "@R13", "AM=M-1", "D=M", "@ARG", "M=D", // ARG = *(--R13) == R13-3
                 "@R13", "AM=M-1", "D=M", "@LCL", "M=D", // LCL = *(--R13) == R13-4
-                "@R13", "AM=M-1", "D=M", "A=D;JMP", // goto *(--R13) == R13-5
+                "@R14", "A=M;JMP", // goto *R14
             ],
             return_instruction,
         );
