@@ -3,7 +3,7 @@ use std::fs::ReadDir;
 use std::io::{BufRead, Write};
 use std::path::{Path, PathBuf};
 
-use assembler::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
+use nand2tetris::assembler::{ComputeFields, ComputeOp, DestOp, Instruction, JumpOp};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Segment {

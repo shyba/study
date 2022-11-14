@@ -1,5 +1,5 @@
 [package]
-name = "assembler"
+name = "nand2tetris"
 version = "0.1.0"
 edition = "2021"
 

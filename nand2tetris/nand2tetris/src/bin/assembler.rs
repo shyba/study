@@ -1,7 +1,6 @@
-mod assembler;
-
 extern crate core;
 
+use nand2tetris::assembler;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
 use std::io::{BufRead, Write};
