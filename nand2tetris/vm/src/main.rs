@@ -198,14 +198,14 @@ fn generate_compute_instruction(fields: &ComputeFields) -> String {
 }
 
 struct CodeGenerator {
-    program_name: String,
+    static_namespace: String,
     label_counter: usize,
 }
 
 impl CodeGenerator {
-    pub fn new(program_name: String) -> CodeGenerator {
+    pub fn new(static_namespace: String) -> CodeGenerator {
         CodeGenerator {
-            program_name,
+            static_namespace,
             label_counter: 0,
         }
     }
@@ -768,7 +768,7 @@ impl CodeGenerator {
     ) -> Vec<Instruction> {
         let mut instructions = vec![match &segment {
             Segment::Static => {
-                Instruction::LabeledAddress(self.program_name.clone() + "." + &offset.to_string())
+                Instruction::LabeledAddress(self.static_namespace.clone() + "." + &offset.to_string())
             }
             Segment::Temp => Instruction::Address(5 + offset),
             _ => Instruction::Address(offset),
@@ -996,6 +996,7 @@ fn process_directory(path: &Path) {
 
     for file_path in ValidFiles::new(Some(&path.to_str().unwrap().to_string())) {
         let file = std::fs::File::open(&file_path).expect("Error opening input file");
+	translator.static_namespace = file_path.file_name().unwrap().to_str().unwrap().to_string();
         let mut parser = Parser::new();
         for line in std::io::BufReader::new(file).lines() {
 	    let line = &line.expect("IO error reading line.");
