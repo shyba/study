@@ -551,9 +551,9 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
-		    // "@5", "D=A", "@R13", "D=M-D", "@R14", "M=D", // R14 = R13 - 5
-		    // "@5", "D=A", "@R13", "D=M-D", "A=D", "A=M", "D=M", "@R14", "M=D", // R14 = R13 - 5
-		    // "@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
+                    // "@5", "D=A", "@R13", "D=M-D", "@R14", "M=D", // R14 = R13 - 5
+                    // "@5", "D=A", "@R13", "D=M-D", "A=D", "A=M", "D=M", "@R14", "M=D", // R14 = R13 - 5
+                    // "@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
                     Instruction::Address(5),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::A(false),
@@ -582,7 +582,7 @@ impl CodeGenerator {
                         jump_op: JumpOp::Nothing,
                         destination_op: DestOp::M,
                     }),
-		    // ..
+                    // ..
                     Instruction::LabeledAddress("SP".to_string()),
                     Instruction::Compute(ComputeFields {
                         compute_op: ComputeOp::DecA(true),
@@ -767,9 +767,9 @@ impl CodeGenerator {
         offset: u16,
     ) -> Vec<Instruction> {
         let mut instructions = vec![match &segment {
-            Segment::Static => {
-                Instruction::LabeledAddress(self.static_namespace.clone() + "." + &offset.to_string())
-            }
+            Segment::Static => Instruction::LabeledAddress(
+                self.static_namespace.clone() + "." + &offset.to_string(),
+            ),
             Segment::Temp => Instruction::Address(5 + offset),
             _ => Instruction::Address(offset),
         }];
@@ -996,10 +996,10 @@ fn process_directory(path: &Path) {
 
     for file_path in ValidFiles::new(Some(&path.to_str().unwrap().to_string())) {
         let file = std::fs::File::open(&file_path).expect("Error opening input file");
-	translator.static_namespace = file_path.file_name().unwrap().to_str().unwrap().to_string();
+        translator.static_namespace = file_path.file_name().unwrap().to_str().unwrap().to_string();
         let mut parser = Parser::new();
         for line in std::io::BufReader::new(file).lines() {
-	    let line = &line.expect("IO error reading line.");
+            let line = &line.expect("IO error reading line.");
             let parsed_line = parser.parse_line(line);
             dbg!(&parsed_line);
             for instruction in translator.translate(&parsed_line) {
@@ -1545,7 +1545,7 @@ mod tests {
         assert_instructions(
             &vec![
                 "@LCL", "D=M", "@R13", "M=D", // R13 = LCL
-		"@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
+                "@5", "D=A", "@R13", "D=M-D", "A=D", "D=M", "@R14", "M=D", // R14 = R13 - 5
                 "@SP", "M=M-1", "A=M", "D=M", "@ARG", "A=M", "M=D", // *ARG = pop()
                 "@ARG", "D=M+1", "@SP", "M=D", // SP = ARG+1
                 "@R13", "AM=M-1", "D=M", "@THAT", "M=D", // THAT = *(--R13) == R13-1

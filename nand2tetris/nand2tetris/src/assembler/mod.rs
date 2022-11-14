@@ -71,11 +71,11 @@ impl FromStr for ComputeOp {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let line = match s.split(';').next() {
             Some(value) => value,
-            None => s
+            None => s,
         };
         let line = match line.split('=').nth(1) {
             Some(value) => value,
-            None => line
+            None => line,
         };
         match line {
             "0" => Ok(ComputeOp::Zero),
@@ -106,9 +106,10 @@ impl FromStr for ComputeOp {
             "D&A" => Ok(ComputeOp::DAndA(false)),
             "D|M" => Ok(ComputeOp::DOrA(true)),
             "D|A" => Ok(ComputeOp::DOrA(false)),
-                _ => Err(ParsingError {kind: ParsingErrorKind::InvalidComputation})
+            _ => Err(ParsingError {
+                kind: ParsingErrorKind::InvalidComputation,
+            }),
         }
-
     }
 }
 
@@ -130,7 +131,9 @@ impl FromStr for DestOp {
                 Some("AD") => Ok(DestOp::AD),
                 Some("DA") => Ok(DestOp::AD),
                 Some("ADM") => Ok(DestOp::ADM),
-                _ => Err(ParsingError {kind: ParsingErrorKind::InvalidDestination})
+                _ => Err(ParsingError {
+                    kind: ParsingErrorKind::InvalidDestination,
+                }),
             }
         }
     }
@@ -154,7 +157,9 @@ impl FromStr for JumpOp {
             "JNE" => Ok(JumpOp::NotEqual),
             "JLE" => Ok(JumpOp::LessEqual),
             "JMP" => Ok(JumpOp::Unconditional),
-            _ => Err(ParsingError {kind: ParsingErrorKind::InvalidJump})
+            _ => Err(ParsingError {
+                kind: ParsingErrorKind::InvalidJump,
+            }),
         }
     }
 }
@@ -164,8 +169,12 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
     if !is_label {
         match value[1..].parse::<u16>() {
             Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
-            Ok(_) => Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}),
-            Err(e) => Err(ParsingError {kind: ParsingErrorKind::Generic(e)}),
+            Ok(_) => Err(ParsingError {
+                kind: ParsingErrorKind::ValueTooLarge,
+            }),
+            Err(e) => Err(ParsingError {
+                kind: ParsingErrorKind::Generic(e),
+            }),
         }
     } else {
         match &value[1..] {
@@ -192,7 +201,7 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
             "THAT" => Ok(Instruction::Address(4)),
             "SCREEN" => Ok(Instruction::Address(16384)),
             "KBD" => Ok(Instruction::Address(24576)),
-            _ => Ok(Instruction::LabeledAddress(value[1..].to_string()))
+            _ => Ok(Instruction::LabeledAddress(value[1..].to_string())),
         }
     }
 }
@@ -205,18 +214,24 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     } else if line.is_empty() {
         Ok(Instruction::Nothing)
     } else if line.starts_with('(') {
-        Ok(Instruction::Label(line.chars().skip(1).take(line.len()-2).collect()))
+        Ok(Instruction::Label(
+            line.chars().skip(1).take(line.len() - 2).collect(),
+        ))
     } else if line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
     } else {
         let line = match line.find("//") {
             Some(idx) => &line[..idx],
-            None => &line
+            None => &line,
         };
         let dest = DestOp::from_str(line)?;
         let comp = ComputeOp::from_str(line)?;
         let jump = JumpOp::from_str(line)?;
-        Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
+        Ok(Instruction::Compute(ComputeFields {
+            destination_op: dest,
+            compute_op: comp,
+            jump_op: jump,
+        }))
     }
 }
 
@@ -226,67 +241,70 @@ pub fn assemble_address(from_value: &u16) -> String {
 
 fn assemble_compute_op(op: &ComputeOp) -> &'static str {
     match op {
-        ComputeOp::Zero =>           "0101010",
-        ComputeOp::One =>            "0111111",
-        ComputeOp::MinusOne =>       "0111010",
-        ComputeOp::D =>              "0001100",
-        ComputeOp::A(true) =>        "1110000",
-        ComputeOp::A(false) =>       "0110000",
-        ComputeOp::NotD =>           "0001101",
-        ComputeOp::NotA(true) =>     "1110001",
-        ComputeOp::NotA(false) =>    "0110001",
-        ComputeOp::MinusD =>         "0001111",
-        ComputeOp::MinusA(true) =>   "1110011",
-        ComputeOp::MinusA(false) =>  "0110011",
-        ComputeOp::IncD =>           "0011111",
-        ComputeOp::IncA(true) =>     "1110111",
-        ComputeOp::IncA(false) =>    "0110111",
-        ComputeOp::DecD =>           "0001110",
-        ComputeOp::DecA(true) =>     "1110010",
-        ComputeOp::DecA(false) =>    "0110010",
-        ComputeOp::DPlusA(true) =>   "1000010",
-        ComputeOp::DPlusA(false) =>  "0000010",
-        ComputeOp::DMinusA(true) =>  "1010011",
+        ComputeOp::Zero => "0101010",
+        ComputeOp::One => "0111111",
+        ComputeOp::MinusOne => "0111010",
+        ComputeOp::D => "0001100",
+        ComputeOp::A(true) => "1110000",
+        ComputeOp::A(false) => "0110000",
+        ComputeOp::NotD => "0001101",
+        ComputeOp::NotA(true) => "1110001",
+        ComputeOp::NotA(false) => "0110001",
+        ComputeOp::MinusD => "0001111",
+        ComputeOp::MinusA(true) => "1110011",
+        ComputeOp::MinusA(false) => "0110011",
+        ComputeOp::IncD => "0011111",
+        ComputeOp::IncA(true) => "1110111",
+        ComputeOp::IncA(false) => "0110111",
+        ComputeOp::DecD => "0001110",
+        ComputeOp::DecA(true) => "1110010",
+        ComputeOp::DecA(false) => "0110010",
+        ComputeOp::DPlusA(true) => "1000010",
+        ComputeOp::DPlusA(false) => "0000010",
+        ComputeOp::DMinusA(true) => "1010011",
         ComputeOp::DMinusA(false) => "0010011",
-        ComputeOp::AMinusD(true) =>  "1000111",
+        ComputeOp::AMinusD(true) => "1000111",
         ComputeOp::AMinusD(false) => "0000111",
-        ComputeOp::DAndA(true) =>    "1000000",
-        ComputeOp::DAndA(false) =>   "0000000",
-        ComputeOp::DOrA(true) =>     "1010101",
-        ComputeOp::DOrA(false) =>    "0010101",
+        ComputeOp::DAndA(true) => "1000000",
+        ComputeOp::DAndA(false) => "0000000",
+        ComputeOp::DOrA(true) => "1010101",
+        ComputeOp::DOrA(false) => "0010101",
     }
 }
 
 fn assemble_dest_op(op: &DestOp) -> &'static str {
     match op {
         DestOp::Nothing => "000",
-        DestOp::M =>       "001",
-        DestOp::D =>       "010",
-        DestOp::DM =>      "011",
-        DestOp::A =>       "100",
-        DestOp::AM =>      "101",
-        DestOp::AD =>      "110",
-        DestOp::ADM =>     "111",
+        DestOp::M => "001",
+        DestOp::D => "010",
+        DestOp::DM => "011",
+        DestOp::A => "100",
+        DestOp::AM => "101",
+        DestOp::AD => "110",
+        DestOp::ADM => "111",
     }
-
 }
 
 fn assemble_jump_op(op: &JumpOp) -> &'static str {
     match op {
-        JumpOp::Nothing =>       "000",
-        JumpOp::Greater =>       "001",
-        JumpOp::Equal =>         "010",
-        JumpOp::GreaterEqual =>  "011",
-        JumpOp::Lower =>         "100",
-        JumpOp::NotEqual =>      "101",
-        JumpOp::LessEqual =>     "110",
+        JumpOp::Nothing => "000",
+        JumpOp::Greater => "001",
+        JumpOp::Equal => "010",
+        JumpOp::GreaterEqual => "011",
+        JumpOp::Lower => "100",
+        JumpOp::NotEqual => "101",
+        JumpOp::LessEqual => "110",
         JumpOp::Unconditional => "111",
     }
-
 }
 
 fn assemble_compute(fields: &ComputeFields) -> String {
-    format!("111{}{}{}", assemble_compute_op(&fields.compute_op), assemble_dest_op(&fields.destination_op), assemble_jump_op(&fields.jump_op))
+    format!(
+        "111{}{}{}",
+        assemble_compute_op(&fields.compute_op),
+        assemble_dest_op(&fields.destination_op),
+        assemble_jump_op(&fields.jump_op)
+    )
 }
 
 pub fn assemble(instruction: &Instruction) -> String {
@@ -315,13 +333,14 @@ mod tests {
 
     #[test]
     fn it_assembles_computation_cases() {
-        assert_eq!("1110111111001000", assemble(&Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            "1110111111001000",
+            assemble(&Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::One,
                 destination_op: DestOp::M,
                 jump_op: JumpOp::Nothing
-            }
-        )));
+            }))
+        );
     }
 
     #[test]
@@ -342,51 +361,61 @@ mod tests {
     fn it_fails_for_more_than_15_bits() {
         let case = "@32768";
         let parsed = parse(case);
-        assert_eq!(parsed, Err(ParsingError {kind: ParsingErrorKind::ValueTooLarge}));
+        assert_eq!(
+            parsed,
+            Err(ParsingError {
+                kind: ParsingErrorKind::ValueTooLarge
+            })
+        );
     }
 
     #[test]
     fn it_parses_simple_cases() {
         let parsed = parse("0;JMP").expect("fail");
-        assert_eq!(parsed, Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            parsed,
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::Zero,
                 destination_op: DestOp::Nothing,
                 jump_op: JumpOp::Unconditional
-            }
-        ));
+            })
+        );
         let parsed = parse("M=D+1;JGE").expect("fail");
-        assert_eq!(parsed, Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            parsed,
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::IncD,
                 destination_op: DestOp::M,
                 jump_op: JumpOp::GreaterEqual
-            }
-        ));
+            })
+        );
         let parsed = parse("D-1;JLT").expect("fail");
-        assert_eq!(parsed, Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            parsed,
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::DecD,
                 destination_op: DestOp::Nothing,
                 jump_op: JumpOp::Lower
-            }
-        ));
+            })
+        );
         let parsed = parse("M=M-1 // what is that?").expect("fail");
-        assert_eq!(parsed, Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            parsed,
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::DecA(true),
                 destination_op: DestOp::M,
                 jump_op: JumpOp::Nothing
-            }
-        ));
+            })
+        );
         let parsed = parse("M=M-1").expect("fail");
-        assert_eq!(parsed, Instruction::Compute(
-            ComputeFields {
+        assert_eq!(
+            parsed,
+            Instruction::Compute(ComputeFields {
                 compute_op: ComputeOp::DecA(true),
                 destination_op: DestOp::M,
                 jump_op: JumpOp::Nothing
-            }
-        ));
+            })
+        );
         let parsed = parse("(MYLABEL)").expect("fail");
         assert_eq!(parsed, Instruction::Label("MYLABEL".to_string()));
         let parsed = parse("@MYLABEL").expect("fail");

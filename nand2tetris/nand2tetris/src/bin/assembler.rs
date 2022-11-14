@@ -1,10 +1,10 @@
 extern crate core;
 
 use nand2tetris::assembler;
-use std::path::{Path, PathBuf};
-use std::{env, fs, io};
 use std::collections::hash_map::Entry;
 use std::io::{BufRead, Write};
+use std::path::{Path, PathBuf};
+use std::{env, fs, io};
 
 fn main() {
     let files = match env::args().len() {
@@ -35,9 +35,7 @@ fn args_to_files() -> io::Result<Vec<PathBuf>> {
     let mut files: Vec<PathBuf> = vec![];
     for name in env::args().skip(1) {
         match Path::new(&name) {
-            p if p.exists() && !p.is_dir() => {
-                files.push(name.into())
-            },
+            p if p.exists() && !p.is_dir() => files.push(name.into()),
             _ => continue,
         }
     }
@@ -54,8 +52,10 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
                 assembler::Instruction::Address(_) => first_pass.push(instruction),
                 assembler::Instruction::LabeledAddress(_) => first_pass.push(instruction),
                 assembler::Instruction::Compute(_) => first_pass.push(instruction),
-                assembler::Instruction::Label(name) => {label_table.insert(name, first_pass.len() as u16);},
-                _ => ()
+                assembler::Instruction::Label(name) => {
+                    label_table.insert(name, first_pass.len() as u16);
+                }
+                _ => (),
             }
         }
         let mut output_path = file;
@@ -65,7 +65,7 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
         for instruction in first_pass {
             let assemble = match instruction {
                 assembler::Instruction::LabeledAddress(name) => {
-		    if let Entry::Vacant(entry) = label_table.entry(name.clone()) {
+                    if let Entry::Vacant(entry) = label_table.entry(name.clone()) {
                         let value = varible_symbol_slot.next().unwrap() as u16;
                         entry.insert(value);
                         assembler::assemble_address(&value)
@@ -74,7 +74,7 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
                         assembler::assemble_address(value)
                     }
                 }
-                _ => assembler::assemble(&instruction)
+                _ => assembler::assemble(&instruction),
             };
             writeln!(&mut output_file, "{}", assemble)?;
         }

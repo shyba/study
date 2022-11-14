@@ -2,7 +2,7 @@ use std::fmt;
 
 #[derive(Eq, PartialEq, Debug)]
 pub struct ParsingError {
-    pub kind: ParsingErrorKind
+    pub kind: ParsingErrorKind,
 }
 #[derive(Eq, PartialEq, Debug)]
 pub enum ParsingErrorKind {
