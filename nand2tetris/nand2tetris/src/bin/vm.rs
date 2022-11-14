@@ -1000,7 +1000,7 @@ fn process_directory(path: &Path) {
         let mut parser = Parser::new();
         for line in std::io::BufReader::new(file).lines() {
 	    let line = &line.expect("IO error reading line.");
-            let parsed_line = parser.parse_line(&line);
+            let parsed_line = parser.parse_line(line);
             dbg!(&parsed_line);
             for instruction in translator.translate(&parsed_line) {
                 dbg!(&instruction);

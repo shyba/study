@@ -3,6 +3,7 @@ extern crate core;
 use nand2tetris::assembler;
 use std::path::{Path, PathBuf};
 use std::{env, fs, io};
+use std::collections::hash_map::Entry;
 use std::io::{BufRead, Write};
 
 fn main() {
@@ -11,7 +12,7 @@ fn main() {
         _ => args_to_files(),
     };
     let files = files.expect("Error reading directory/files.");
-    if files.len() == 0 {
+    if files.is_empty() {
         println!("Nothing to assemble!");
         return;
     }
@@ -64,9 +65,9 @@ fn process_file(files: Vec<PathBuf>) -> io::Result<()> {
         for instruction in first_pass {
             let assemble = match instruction {
                 assembler::Instruction::LabeledAddress(name) => {
-                    if !label_table.contains_key(&name) {
+		    if let Entry::Vacant(entry) = label_table.entry(name.clone()) {
                         let value = varible_symbol_slot.next().unwrap() as u16;
-                        label_table.insert(name, value);
+                        entry.insert(value);
                         assembler::assemble_address(&value)
                     } else {
                         let value = label_table.get(&name).unwrap();

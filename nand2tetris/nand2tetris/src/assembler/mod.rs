@@ -2,7 +2,7 @@ mod errors;
 use errors::{ParsingError, ParsingErrorKind};
 use std::str::FromStr;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Instruction {
     Address(u16),
     LabeledAddress(String),
@@ -12,7 +12,7 @@ pub enum Instruction {
     Nothing,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ComputeOp {
     Zero,
     One,
@@ -34,7 +34,7 @@ pub enum ComputeOp {
     DOrA(bool),
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum JumpOp {
     Nothing,
     Greater,
@@ -46,7 +46,7 @@ pub enum JumpOp {
     Unconditional,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum DestOp {
     Nothing,
     M,
@@ -58,7 +58,7 @@ pub enum DestOp {
     ADM,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ComputeFields {
     pub compute_op: ComputeOp,
     pub jump_op: JumpOp,
@@ -69,11 +69,11 @@ impl FromStr for ComputeOp {
     type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let line = match s.split(";").next() {
+        let line = match s.split(';').next() {
             Some(value) => value,
             None => s
         };
-        let line = match line.split("=").skip(1).next() {
+        let line = match line.split('=').nth(1) {
             Some(value) => value,
             None => line
         };
@@ -116,10 +116,10 @@ impl FromStr for DestOp {
     type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.contains("=") {
+        if !s.contains('=') {
             Ok(DestOp::Nothing)
         } else {
-            match s.split("=").nth(0) {
+            match s.split('=').next() {
                 Some("M") => Ok(DestOp::M),
                 Some("D") => Ok(DestOp::D),
                 Some("A") => Ok(DestOp::A),
@@ -140,11 +140,11 @@ impl FromStr for JumpOp {
     type Err = ParsingError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.contains(";") {
+        if !s.contains(';') {
             return Ok(JumpOp::Nothing);
         }
 
-        let s = s.split(";").skip(1).next().unwrap_or(s);
+        let s = s.split(';').nth(1).unwrap_or(s);
 
         match s {
             "JGT" => Ok(JumpOp::Greater),
@@ -160,7 +160,7 @@ impl FromStr for JumpOp {
 }
 
 fn parse_address(value: String) -> Result<Instruction, ParsingError> {
-    let is_label = value.chars().skip(1).any(|c| {c > '9' || c < '0'});
+    let is_label = value.chars().skip(1).any(|c| !('0'..='9').contains(&c));
     if !is_label {
         match value[1..].parse::<u16>() {
             Ok(parsed) if parsed <= 0x7FFF => Ok(Instruction::Address(parsed)),
@@ -199,12 +199,12 @@ fn parse_address(value: String) -> Result<Instruction, ParsingError> {
 
 pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
     let original_line = line.to_owned();
-    let line = line.replace(" ", "");
-    if line.starts_with("@") {
+    let line = line.replace(' ', "");
+    if line.starts_with('@') {
         parse_address(line)
-    } else if line == "" {
+    } else if line.is_empty() {
         Ok(Instruction::Nothing)
-    } else if line.starts_with("(") {
+    } else if line.starts_with('(') {
         Ok(Instruction::Label(line.chars().skip(1).take(line.len()-2).collect()))
     } else if line.starts_with("//") {
         Ok(Instruction::Comment(original_line))
@@ -213,9 +213,9 @@ pub fn parse(line: &str) -> Result<Instruction, ParsingError> {
             Some(idx) => &line[..idx],
             None => &line
         };
-        let dest = DestOp::from_str(&line)?;
-        let comp = ComputeOp::from_str(&line)?;
-        let jump = JumpOp::from_str(&line)?;
+        let dest = DestOp::from_str(line)?;
+        let comp = ComputeOp::from_str(line)?;
+        let jump = JumpOp::from_str(line)?;
         Ok(Instruction::Compute(ComputeFields {destination_op: dest, compute_op: comp, jump_op: jump}))
     }
 }
@@ -292,7 +292,7 @@ fn assemble_compute(fields: &ComputeFields) -> String {
 pub fn assemble(instruction: &Instruction) -> String {
     match instruction {
         Instruction::Address(addr) => assemble_address(addr),
-        Instruction::Compute(fields) => assemble_compute(&fields),
+        Instruction::Compute(fields) => assemble_compute(fields),
         _ => String::new(),
     }
 }
