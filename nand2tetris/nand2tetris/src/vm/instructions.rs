@@ -103,6 +103,12 @@ pub struct Parser {
     pub current_function: Option<String>,
 }
 
+impl Default for Parser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Parser {
     pub fn new() -> Self {
         Self {
