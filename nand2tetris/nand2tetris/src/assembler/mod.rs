@@ -314,6 +314,78 @@ pub fn assemble(instruction: &Instruction) -> String {
         _ => String::new(),
     }
 }
+//----
+pub fn generate_instruction(ins: &Instruction) -> String {
+    match ins {
+        Instruction::Address(value) => format!("@{}", value),
+        Instruction::LabeledAddress(value) => format!("@{}", value),
+        Instruction::Comment(content) => format!("//{}", content),
+        Instruction::Compute(fields) => generate_compute_instruction(fields),
+        Instruction::Label(label) => format!("({})", label),
+        Instruction::Nothing => String::new(),
+    }
+}
+
+pub fn generate_compute_instruction(fields: &ComputeFields) -> String {
+    let mut result = String::new();
+    result.push_str(match fields.destination_op {
+        DestOp::M => "M=",
+        DestOp::D => "D=",
+        DestOp::A => "A=",
+        DestOp::DM => "DM=",
+        DestOp::AM => "AM=",
+        DestOp::AD => "AD=",
+        DestOp::ADM => "ADM=",
+        DestOp::Nothing => "",
+    });
+    result.push_str(match fields.compute_op {
+        ComputeOp::Zero => "0",
+        ComputeOp::One => "1",
+        ComputeOp::MinusOne => "-1",
+        ComputeOp::D => "D",
+        ComputeOp::A(true) => "M",
+        ComputeOp::A(false) => "A",
+        ComputeOp::NotD => "!D",
+        ComputeOp::NotA(true) => "!M",
+        ComputeOp::NotA(false) => "!A",
+        ComputeOp::MinusD => "-D",
+        ComputeOp::MinusA(true) => "-M",
+        ComputeOp::MinusA(false) => "-A",
+        ComputeOp::IncD => "D+1",
+        ComputeOp::IncA(true) => "M+1",
+        ComputeOp::IncA(false) => "A+1",
+        ComputeOp::DecD => "D-1",
+        ComputeOp::DecA(true) => "M-1",
+        ComputeOp::DecA(false) => "A-1",
+        ComputeOp::DPlusA(true) => "D+M",
+        ComputeOp::DPlusA(false) => "D+A",
+        ComputeOp::DMinusA(true) => "D-M",
+        ComputeOp::DMinusA(false) => "D-A",
+        ComputeOp::AMinusD(true) => "M-D",
+        ComputeOp::AMinusD(false) => "A-D",
+        ComputeOp::DAndA(true) => "D&M",
+        ComputeOp::DAndA(false) => "D&A",
+        ComputeOp::DOrA(true) => "D|M",
+        ComputeOp::DOrA(false) => "D|A",
+    });
+    if fields.jump_op == JumpOp::Nothing {
+        return result;
+    } else if !result.is_empty() {
+        result.push(';');
+    }
+    result.push_str(match fields.jump_op {
+        JumpOp::Greater => "JGT",
+        JumpOp::Equal => "JEQ",
+        JumpOp::GreaterEqual => "JGE",
+        JumpOp::Lower => "JLT",
+        JumpOp::NotEqual => "JNE",
+        JumpOp::LessEqual => "JLE",
+        JumpOp::Unconditional => "JMP",
+        JumpOp::Nothing => "",
+    });
+    result
+}
+//---
 
 #[cfg(test)]
 mod tests {
