@@ -51,26 +51,6 @@ pub enum VMInstruction {
     Call(VMFunctionCall),
 }
 
-pub enum Address {
-    SP,
-    LCL,
-    ARG,
-    THIS,
-    THAT,
-    TEMP0,
-    TEMP1,
-    TEMP2,
-    TEMP3,
-    TEMP4,
-    TEMP5,
-    TEMP6,
-    TEMP7,
-    R13,
-    R14,
-    R15,
-    Symbol(u8),
-}
-
 fn try_parse_arithmetic(line: &str) -> Option<VMInstruction> {
     match line.trim().to_lowercase().as_str() {
         "add" => Some(VMInstruction::Arithmetic(Arithmetic::Add)),
