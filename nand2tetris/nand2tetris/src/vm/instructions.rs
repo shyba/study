@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum Segment {
     Argument,
@@ -42,6 +44,26 @@ pub enum VMInstruction {
     Function(String, u16),
     Return,
     Call(VMFunctionCall),
+}
+
+type ArithmeticParsingError = String;
+
+impl FromStr for Arithmetic {
+    type Err = ArithmeticParsingError;
+    fn from_str(input: &str) -> Result<Arithmetic, Self::Err> {
+	match input.trim().to_lowercase().as_str() {
+            "add" => Ok(Arithmetic::Add),
+            "sub" => Ok(Arithmetic::Sub),
+            "neg" => Ok(Arithmetic::Neg),
+            "eq" => Ok(Arithmetic::Eq),
+            "gt" => Ok(Arithmetic::Gt),
+            "lt" => Ok(Arithmetic::Lt),
+            "and" => Ok(Arithmetic::And),
+            "or" => Ok(Arithmetic::Or),
+            "not" => Ok(Arithmetic::Not),
+            _ => Err(format!("Invalid arithmetic instruction: {}", input)),
+	}
+    }
 }
 
 pub fn try_parse_arithmetic(line: &str) -> Option<VMInstruction> {
