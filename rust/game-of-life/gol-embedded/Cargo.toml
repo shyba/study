@@ -1,7 +1,10 @@
+cargo-features = ["per-package-target"]
+
 [package]
 name = "gol-embedded"
 version = "0.1.0"
 edition = "2021"
+forced-target = "thumbv6m-none-eabi"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -21,3 +24,8 @@ panic = "abort"
 
 [profile.release]
 panic = "abort"
+
+[[bin]]
+name = "gol-embedded"
+test = false
+bench = false

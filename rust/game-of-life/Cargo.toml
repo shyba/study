@@ -1,0 +1,4 @@
+
+[workspace]
+members = ["gol-rs", "gol-embedded", "gol-x86-cli"]
+
