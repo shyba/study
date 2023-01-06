@@ -15,12 +15,11 @@ impl FromStr for GameOfLife {
     type Err = ParseGameError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut game = GameOfLife::new();
+        let mut game = GameOfLife::default();
         for (idxr, line) in s.lines().enumerate() {
             for (idxc, c) in line.chars().enumerate() {
-                match c {
-                    '#' => game.screen.set(idxr * COLUMNS + idxc, true),
-                    _ => (),
+                if c == '#' {
+                    game.screen.set(idxr * COLUMNS + idxc, true);
                 }
             }
         }
@@ -28,14 +27,17 @@ impl FromStr for GameOfLife {
     }
 }
 
-impl GameOfLife {
-    pub fn new() -> GameOfLife {
-        GameOfLife {
+impl Default for GameOfLife {
+    fn default() -> Self {
+        Self {
             screen: bv::bitarr!(u8, bv::Msb0; 0; COLUMNS*ROWS),
         }
     }
+}
 
-    pub fn get_at(self: &Self, row: usize, col: usize) -> Option<bool> {
+impl GameOfLife {
+
+    pub fn get_at(&self, row: usize, col: usize) -> Option<bool> {
         let row = row * COLUMNS;
         match self.screen.get(row + col) {
             Some(x) if *x => Some(true),
@@ -44,16 +46,15 @@ impl GameOfLife {
         }
     }
 
-    pub fn advance(self: &mut Self) -> usize {
+    pub fn advance(&mut self) -> usize {
         let mut changes = 0;
-        let mut tmp = GameOfLife::new();
-        tmp.screen = self.screen.clone();
+        let tmp = GameOfLife {screen: self.screen};
         for idxr in 0..ROWS {
             for idxc in 0..COLUMNS {
                 let index = idxr * COLUMNS + idxc;
                 let new_state = tmp.next_state_at(idxr, idxc);
                 let old_state = self.get_at(idxr, idxc).unwrap_or(false);
-                changes += match (old_state != new_state) {
+                changes += match old_state != new_state {
                     true => 1,
                     _ => 0
                 };
@@ -63,10 +64,10 @@ impl GameOfLife {
         changes
     }
 
-    pub fn count_alive_neighbors(self: &Self, row: usize, col: usize) -> usize {
-        let min_row = row.checked_sub(1).unwrap_or(0);
+    pub fn count_alive_neighbors(&self, row: usize, col: usize) -> usize {
+        let min_row = row.saturating_sub(1);
         let max_row = min(ROWS - 1, row + 1);
-        let min_col = col.checked_sub(1).unwrap_or(0);
+        let min_col = col.saturating_sub(1);
         let max_col = min(COLUMNS - 1, col + 1);
         let mut alive = 0;
         for idxr in min_row..=max_row {
@@ -83,7 +84,7 @@ impl GameOfLife {
         alive
     }
 
-    pub fn next_state_at(self: &Self, row: usize, col: usize) -> bool {
+    pub fn next_state_at(&self, row: usize, col: usize) -> bool {
         let is_cell_alive = self.get_at(row, col).unwrap();
         let neighbors = self.count_alive_neighbors(row, col);
         if is_cell_alive {

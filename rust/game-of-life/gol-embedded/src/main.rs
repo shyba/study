@@ -121,7 +121,7 @@ fn main() -> ! {
         if game.advance() < 100 {
             count += 1;
         }
-        //delay.delay_ms(500);
+        delay.delay_ms(500);
     }
 }
 

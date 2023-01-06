@@ -55,14 +55,7 @@ impl<'a> App<'a> {
         App { game }
     }
 
-    fn all_black(self: &Self, buf: &mut Buffer) {
-        for cell in buf.content.iter_mut() {
-            cell.set_fg(Color::Black).set_bg(Color::Black);
-        }
-    }
-
     fn game_to_buf(self, area: Rect, buf: &mut Buffer) {
-        //self.all_black(buf);
         let cols = min(
             COLUMNS,
             area.width
@@ -106,7 +99,7 @@ fn render(game: &GameOfLife) {
             match value.as_deref() {
                 Some(true) => print!("#"),
                 Some(false) => print!("-"),
-                None => println!("ERROR AT {}", index),
+                None => println!("ERROR AT {index}"),
             }
         }
         println!("|");
