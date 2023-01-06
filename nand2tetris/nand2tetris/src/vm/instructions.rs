@@ -46,10 +46,8 @@ pub enum VMInstruction {
     Call(VMFunctionCall),
 }
 
-type ArithmeticParsingError = String;
-
 impl FromStr for Arithmetic {
-    type Err = ArithmeticParsingError;
+    type Err = &'static str;
     fn from_str(input: &str) -> Result<Arithmetic, Self::Err> {
 	match input.trim().to_lowercase().as_str() {
             "add" => Ok(Arithmetic::Add),
@@ -61,23 +59,33 @@ impl FromStr for Arithmetic {
             "and" => Ok(Arithmetic::And),
             "or" => Ok(Arithmetic::Or),
             "not" => Ok(Arithmetic::Not),
-            _ => Err(format!("Invalid arithmetic instruction: {}", input)),
+            _ => Err("Invalid arithmetic instruction"),
 	}
     }
 }
 
 pub fn try_parse_arithmetic(line: &str) -> Option<VMInstruction> {
-    match line.trim().to_lowercase().as_str() {
-        "add" => Some(VMInstruction::Arithmetic(Arithmetic::Add)),
-        "sub" => Some(VMInstruction::Arithmetic(Arithmetic::Sub)),
-        "neg" => Some(VMInstruction::Arithmetic(Arithmetic::Neg)),
-        "eq" => Some(VMInstruction::Arithmetic(Arithmetic::Eq)),
-        "gt" => Some(VMInstruction::Arithmetic(Arithmetic::Gt)),
-        "lt" => Some(VMInstruction::Arithmetic(Arithmetic::Lt)),
-        "and" => Some(VMInstruction::Arithmetic(Arithmetic::And)),
-        "or" => Some(VMInstruction::Arithmetic(Arithmetic::Or)),
-        "not" => Some(VMInstruction::Arithmetic(Arithmetic::Not)),
-        _ => None,
+    match Arithmetic::from_str(line) {
+	Ok(arith) => Some(VMInstruction::Arithmetic(arith)),
+	Err(_) => None
+    }
+}
+
+impl FromStr for Segment {
+    type Err = &'static str;
+
+    fn from_str(input: &str) -> Result<Segment, Self::Err> {
+	match input {
+	    "argument" => Ok(Segment::Argument),
+	    "pointer" => Ok(Segment::Pointer),
+	    "local" => Ok(Segment::Local),
+	    "static" => Ok(Segment::Static),
+	    "this" => Ok(Segment::This),
+	    "that" => Ok(Segment::That),
+	    "temp" => Ok(Segment::Temp), // double check
+	    "constant" => Ok(Segment::Constant),
+	    _ => Err("Invalid segment")
+	}
     }
 }
 
@@ -90,7 +98,7 @@ pub fn parse_push(line: String) -> VMInstruction {
         )
     }
     VMInstruction::Push(
-        parse_segment(words[1]),
+        Segment::from_str(words[1]).expect("Error parsing segment"),
         words[2].parse::<u16>().expect("Error parsing push index"),
     )
 }
@@ -101,23 +109,9 @@ pub fn parse_pop(line: String) -> VMInstruction {
         panic!("Error parsing pop. Expected: pop <segment> <value>")
     }
     VMInstruction::Pop(
-        parse_segment(words[1]),
+        Segment::from_str(words[1]).expect("Error parsing segment"),
         words[2].parse::<u16>().expect("Error parsing pop index"),
     )
-}
-
-pub fn parse_segment(segment: &str) -> Segment {
-    match segment {
-        "argument" => Segment::Argument,
-        "pointer" => Segment::Pointer,
-        "local" => Segment::Local,
-        "static" => Segment::Static,
-        "this" => Segment::This,
-        "that" => Segment::That,
-        "temp" => Segment::Temp, // double check
-        "constant" => Segment::Constant,
-        unexpected => panic!("Unexpected segment: {}", unexpected),
-    }
 }
 
 pub struct Parser {
@@ -150,13 +144,13 @@ impl Parser {
         let lower_line = line.trim().to_lowercase();
 
         if line.is_empty() || line.starts_with("//") {
-            VMInstruction::Comment(line.to_string()) // todo: handle comments after instructions
+            VMInstruction::Comment(line.to_string())
         } else if lower_line.starts_with("push") {
             parse_push(line.to_lowercase())
-        } else if try_parse_arithmetic(line).is_some() {
-            try_parse_arithmetic(line).unwrap()
         } else if lower_line.starts_with("pop") {
             parse_pop(line.to_lowercase())
+        } else if try_parse_arithmetic(line).is_some() {
+            try_parse_arithmetic(line).unwrap()
         } else if lower_line.starts_with("label") {
             let label = line.split_whitespace().nth(1).unwrap();
             VMInstruction::Label(String::from(label))
