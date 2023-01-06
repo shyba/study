@@ -79,7 +79,7 @@ fn process_directory(path: &Path) {
     let output_file_name = format!("{}.asm", directory_name);
     let output_file_path = path.join(Path::new(&output_file_name));
     let mut output_file =
-        std::fs::File::create(&output_file_path).expect("Error opening output file");
+        std::fs::File::create(output_file_path).expect("Error opening output file");
     write_boot(&mut output_file);
 
     for file_path in ValidFiles::new(Some(&path.to_str().unwrap().to_string())) {
@@ -116,7 +116,7 @@ fn process_single_file(file_path: PathBuf) {
 
     let output_file_path = file_path.to_str().unwrap().replace(".vm", ".asm");
     let mut output_file =
-        std::fs::File::create(&output_file_path).expect("Error opening output file");
+        std::fs::File::create(output_file_path).expect("Error opening output file");
     for line in std::io::BufReader::new(file).lines() {
         let parsed_line = parser.parse_line(&line.expect("IO error reading line."));
         dbg!(&parsed_line);
