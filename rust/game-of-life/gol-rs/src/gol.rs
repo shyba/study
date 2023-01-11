@@ -48,16 +48,15 @@ impl GameOfLife {
 
     pub fn advance(&mut self) -> usize {
         let mut changes = 0;
-        let tmp = GameOfLife {screen: self.screen};
+        let current_state = GameOfLife {screen: self.screen};
         for idxr in 0..ROWS {
             for idxc in 0..COLUMNS {
+                let new_state = current_state.next_state_at(idxr, idxc);
+                let old_state = current_state.get_at(idxr, idxc).unwrap_or(false);
+                if new_state != old_state {
+                    changes += 1;
+                }
                 let index = idxr * COLUMNS + idxc;
-                let new_state = tmp.next_state_at(idxr, idxc);
-                let old_state = self.get_at(idxr, idxc).unwrap_or(false);
-                changes += match old_state != new_state {
-                    true => 1,
-                    _ => 0
-                };
                 self.screen.set(index, new_state);
             }
         }
@@ -85,9 +84,8 @@ impl GameOfLife {
     }
 
     pub fn next_state_at(&self, row: usize, col: usize) -> bool {
-        let is_cell_alive = self.get_at(row, col).unwrap();
         let neighbors = self.count_alive_neighbors(row, col);
-        if is_cell_alive {
+        if let Some(true) = self.get_at(row, col) {
             neighbors == 2 || neighbors == 3
         } else {
             neighbors == 3
