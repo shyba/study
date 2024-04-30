@@ -2,13 +2,13 @@ use futures::{
     stream::{FuturesOrdered, FuturesUnordered},
     StreamExt,
 };
-use tokio::time::{sleep, Duration, Instant};
+use tokio::time::{sleep, Duration};
 
-async fn sleep_and_do<F, T>(sleep_seconds: u64, do_what: F) -> T
+async fn sleep_and_do<F, T>(sleep_ms: u64, do_what: F) -> T
 where
     F: FnOnce() -> T,
 {
-    sleep(Duration::from_millis(sleep_seconds)).await;
+    sleep(Duration::from_millis(sleep_ms)).await;
     do_what()
 }
 
@@ -32,11 +32,8 @@ async fn sort_broken(vals: Vec<u64>) -> Vec<u64> {
 async fn main() {
     let original = vec![10, 0, 2, 6];
     println!("original: {original:?}");
-    println!("sort: {:?}", sort(original.clone()).await);
-    println!("broken sort: {:?}", sort_broken(original.clone()).await);
-    let start = Instant::now();
-    sort((0..1000).rev().collect()).await;
-    println!("{:?}", Instant::now() - start);
+    println!("sorted: {:?}", sort(original.clone()).await);
+    println!("sorted(broken): {:?}", sort_broken(original.clone()).await);
 }
 
 #[cfg(test)]
